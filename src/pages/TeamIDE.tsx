@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamIDE = () => {
   const { id } = useParams();
@@ -116,10 +117,11 @@ export default EcoTracker;`);
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4 flex-shrink-0">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to={`/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+            <MobileNavigation />
+            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-3">
@@ -160,7 +162,7 @@ export default EcoTracker;`);
 
       <div className="flex flex-1 overflow-hidden">
         {/* File Explorer */}
-        <aside className="w-64 bg-nav-background border-r border-border p-4 overflow-y-auto">
+        <aside className="hidden lg:block w-64 bg-nav-background border-r border-border p-4 overflow-y-auto">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Explorer</h3>
@@ -223,7 +225,7 @@ export default EcoTracker;`);
         </main>
 
         {/* Right Sidebar */}
-        <aside className="w-80 bg-nav-background border-l border-border p-4 space-y-4 overflow-y-auto">
+        <aside className="hidden xl:block w-80 bg-nav-background border-l border-border p-4 space-y-4 overflow-y-auto">
           {/* AI Assistant */}
           <Card>
             <CardHeader className="pb-3">

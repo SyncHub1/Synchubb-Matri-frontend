@@ -61,7 +61,7 @@ const CreateTeam = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <Link to="/teams" className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
             <ChevronLeft className="h-5 w-5" />
@@ -74,8 +74,8 @@ const CreateTeam = () => {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -105,7 +105,7 @@ const CreateTeam = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <select

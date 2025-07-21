@@ -89,8 +89,8 @@ const TeamDiscovery = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
@@ -102,30 +102,30 @@ const TeamDiscovery = () => {
             </h1>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="relative">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search projects, users, challenges..."
-                className="pl-10 w-64"
+                placeholder="Search projects, users..."
+                className="pl-10 w-full sm:w-64"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="hidden sm:flex">
               <Users className="h-4 w-4" />
             </Button>
-            <Avatar>
+            <Avatar className="hidden sm:flex">
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Sidebar */}
-          <aside className="w-64 space-y-6">
+          <aside className="w-full lg:w-64 space-y-6">
             <div>
               <h2 className="text-lg font-semibold mb-4">Discover open teams or forge your own path to innovation.</h2>
             </div>
@@ -196,10 +196,10 @@ const TeamDiscovery = () => {
 
           {/* Main Content */}
           <main className="flex-1">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6">
               {filteredTeams.map((team) => (
                 <Card key={team.id} className="bg-team-card hover:bg-team-card-hover transition-all duration-200 shadow-card hover:shadow-glow">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-semibold mb-2">{team.name}</h3>

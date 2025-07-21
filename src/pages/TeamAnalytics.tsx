@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamAnalytics = () => {
   const { id } = useParams();
@@ -89,10 +90,11 @@ const TeamAnalytics = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           <div className="flex items-center gap-4">
-            <Link to={`/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+            <MobileNavigation />
+            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-3">
@@ -118,11 +120,11 @@ const TeamAnalytics = () => {
         </div>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Code className="h-8 w-8 mx-auto mb-2 text-primary" />
               <div className="text-2xl font-bold">{teamStats.totalCodingHours}h</div>
               <p className="text-sm text-muted-foreground">Coding Hours</p>
@@ -130,7 +132,7 @@ const TeamAnalytics = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success" />
               <div className="text-2xl font-bold">{teamStats.tasksCompleted}</div>
               <p className="text-sm text-muted-foreground">Tasks Done</p>
@@ -138,7 +140,7 @@ const TeamAnalytics = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 text-info" />
               <div className="text-2xl font-bold">{teamStats.messagesExchanged}</div>
               <p className="text-sm text-muted-foreground">Messages</p>
@@ -146,7 +148,7 @@ const TeamAnalytics = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Activity className="h-8 w-8 mx-auto mb-2 text-warning" />
               <div className="text-2xl font-bold">{teamStats.whiteboardSessions}</div>
               <p className="text-sm text-muted-foreground">Whiteboard</p>
@@ -154,7 +156,7 @@ const TeamAnalytics = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Clock className="h-8 w-8 mx-auto mb-2 text-purple-500" />
               <div className="text-2xl font-bold">{teamStats.videoCallHours}h</div>
               <p className="text-sm text-muted-foreground">Video Calls</p>
@@ -162,7 +164,7 @@ const TeamAnalytics = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Team Performance */}
           <div className="lg:col-span-2 space-y-6">
             {/* Weekly Activity Chart */}

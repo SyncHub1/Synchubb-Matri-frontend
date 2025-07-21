@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamTasks = () => {
   const { id } = useParams();
@@ -172,10 +173,11 @@ const TeamTasks = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           <div className="flex items-center gap-4">
-            <Link to={`/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+            <MobileNavigation />
+            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-3">
@@ -189,32 +191,35 @@ const TeamTasks = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search tasks..." className="pl-10 w-64" />
+              <Input placeholder="Search tasks..." className="pl-10 w-full sm:w-64" />
             </div>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="hidden sm:flex">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button variant="purple">
+            <Button variant="purple" className="hidden sm:flex">
               <Plus className="h-4 w-4 mr-2" />
               New Task
+            </Button>
+            <Button variant="purple" size="icon" className="sm:hidden">
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
+          <TabsList className="grid w-full max-w-md grid-cols-3 mb-4 sm:mb-6">
             <TabsTrigger value="board">Kanban Board</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="board" className="space-y-6">
-            <div className="flex gap-6 overflow-x-auto pb-6">
+          <TabsContent value="board" className="space-y-4 sm:space-y-6">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 sm:pb-6">
               <StatusColumn 
                 status="todo" 
                 title="To Do" 

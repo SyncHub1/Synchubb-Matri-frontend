@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -122,10 +123,11 @@ const TeamWhiteboard = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4 flex-shrink-0">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to={`/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+            <MobileNavigation />
+            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-3">
@@ -170,7 +172,7 @@ const TeamWhiteboard = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Toolbar */}
-        <aside className="w-20 bg-nav-background border-r border-border p-4 space-y-4">
+        <aside className="hidden sm:block w-16 sm:w-20 bg-nav-background border-r border-border p-2 sm:p-4 space-y-4">
           {/* Drawing Tools */}
           <div className="space-y-2">
             {tools.map((tool) => (
@@ -204,7 +206,7 @@ const TeamWhiteboard = () => {
         </aside>
 
         {/* Main Canvas Area */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6">
           <div className="h-full bg-white rounded-lg shadow-lg border border-border relative overflow-hidden">
             <canvas
               ref={canvasRef}
@@ -249,7 +251,7 @@ const TeamWhiteboard = () => {
         </main>
 
         {/* Properties Panel */}
-        <aside className="w-64 bg-nav-background border-l border-border p-4 space-y-6">
+        <aside className="hidden lg:block w-64 bg-nav-background border-l border-border p-4 space-y-6">
           {/* Color Palette */}
           <Card>
             <CardContent className="p-4">

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamVideo = () => {
   const { id } = useParams();
@@ -76,10 +77,11 @@ const TeamVideo = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-nav-background border-b border-border px-6 py-4 flex-shrink-0">
+      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to={`/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+            <MobileNavigation />
+            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-3">
@@ -106,11 +108,11 @@ const TeamVideo = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main Video Area */}
-        <main className="flex-1 p-6">
-          <div className="h-full grid grid-cols-2 gap-4">
+        <main className="flex-1 p-4 sm:p-6">
+          <div className="h-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {participants.map((participant) => (
               <Card key={participant.id} className={`relative overflow-hidden ${
-                participant.isPresenting ? 'col-span-2' : ''
+                participant.isPresenting ? 'sm:col-span-2' : ''
               } ${participant.isSpeaking ? 'ring-2 ring-primary' : ''}`}>
                 <CardContent className="p-0 h-full">
                   {participant.isVideoOn ? (
@@ -165,29 +167,29 @@ const TeamVideo = () => {
           </div>
 
           {/* Controls Bar */}
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-nav-background border border-border rounded-full px-6 py-3 flex items-center gap-3 shadow-lg">
+          <div className="fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 bg-nav-background border border-border rounded-full px-3 sm:px-6 py-2 sm:py-3 flex items-center gap-2 sm:gap-3 shadow-lg">
             <Button
               variant={isMicOn ? "secondary" : "destructive"}
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
               onClick={() => setIsMicOn(!isMicOn)}
             >
-              {isMicOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              {isMicOn ? <Mic className="h-3 w-3 sm:h-4 sm:w-4" /> : <MicOff className="h-3 w-3 sm:h-4 sm:w-4" />}
             </Button>
             
             <Button
               variant={isVideoOn ? "secondary" : "destructive"}
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
               onClick={() => setIsVideoOn(!isVideoOn)}
             >
-              {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              {isVideoOn ? <Video className="h-3 w-3 sm:h-4 sm:w-4" /> : <VideoOff className="h-3 w-3 sm:h-4 sm:w-4" />}
             </Button>
 
             <Button
               variant={isScreenSharing ? "purple" : "secondary"}
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 hidden sm:flex"
               onClick={() => setIsScreenSharing(!isScreenSharing)}
             >
               <ScreenShare className="h-4 w-4" />
@@ -196,7 +198,7 @@ const TeamVideo = () => {
             <Button
               variant={isSpeakerOn ? "secondary" : "destructive"}
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 hidden sm:flex"
               onClick={() => setIsSpeakerOn(!isSpeakerOn)}
             >
               {isSpeakerOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
@@ -205,29 +207,29 @@ const TeamVideo = () => {
             <Button
               variant="destructive"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
               asChild
             >
               <Link to={`/teams/${id}/chat`}>
-                <Phone className="h-4 w-4" />
+                <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
               </Link>
             </Button>
 
-            <div className="h-6 w-px bg-border mx-2" />
+            <div className="h-4 sm:h-6 w-px bg-border mx-1 sm:mx-2 hidden sm:block" />
 
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 lg:hidden"
               onClick={() => setShowChat(!showChat)}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 hidden sm:flex"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
@@ -236,7 +238,7 @@ const TeamVideo = () => {
 
         {/* Chat Sidebar */}
         {showChat && (
-          <aside className="w-80 bg-nav-background border-l border-border p-4 space-y-4">
+          <aside className="hidden lg:block w-80 bg-nav-background border-l border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Meeting Chat</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowChat(false)}>

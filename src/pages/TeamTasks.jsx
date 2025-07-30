@@ -27,6 +27,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MobileNavigation from "@/components/MobileNavigation";
+import FloatingActionButton from "@/components/FloatingActionButton";
+import QuickActions from "@/components/QuickActions";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
+import StatusIndicator from "@/components/StatusIndicator";
 
 const TeamTasks = () => {
   const { id } = useParams();
@@ -177,19 +181,19 @@ const TeamTasks = () => {
       
       <div className="space-y-3">
         {tasks.map((task) => (
-          <Card key={task.id} className="hover:shadow-md transition-shadow cursor-pointer group">
+        <Card key={task.id} className="bg-gradient-card border-border/30 hover:shadow-card hover:scale-[1.02] transition-all duration-200 cursor-pointer group backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
-                  <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                  <h4 className="font-semibold text-sm line-clamp-2 text-foreground">{task.title}</h4>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-6 w-6"
+                      className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => deleteTask(task.id)}
                     >
-                      <Trash2 className="h-3 w-3 text-destructive" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -198,7 +202,7 @@ const TeamTasks = () => {
                 
                 <div className="flex flex-wrap gap-1">
                   {task.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
+                    <Badge key={tag} variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
                       {tag}
                     </Badge>
                   ))}
@@ -266,9 +270,10 @@ const TeamTasks = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search tasks..." className="pl-10 w-full sm:w-64" />
             </div>
-            <Button variant="outline" size="icon" className="hidden sm:flex">
+            <Button variant="outline" size="icon" className="hidden sm:flex border-primary/30 hover:bg-primary/10">
               <Filter className="h-4 w-4" />
             </Button>
+            <QuickActions />
             <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
               <DialogTrigger asChild>
                 <Button variant="purple" className="hidden sm:flex">
@@ -432,49 +437,110 @@ const TeamTasks = () => {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Task Calendar</CardTitle>
+            <Card className="bg-gradient-card border-border/30 shadow-card">
+              <CardHeader className="border-b border-border/30">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-primary">Task Calendar</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium px-3">January 2024</span>
+                    <Button variant="outline" size="sm">
+                      <ChevronLeft className="h-4 w-4 rotate-180" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
+                {/* Calendar Header */}
                 <div className="grid grid-cols-7 gap-2 mb-4">
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+                    <div key={day} className="p-3 text-center text-sm font-semibold text-primary border-b border-border/30">
                       {day}
                     </div>
                   ))}
                 </div>
                 
+                {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-2">
                   {Array.from({ length: 35 }, (_, i) => {
                     const day = i + 1;
-                    const hasTasks = day <= 31 && Math.random() > 0.7;
+                    const currentDate = new Date();
+                    const isToday = currentDate.getDate() === day;
+                    const tasksForDay = tasks.filter(task => {
+                      const taskDate = new Date(task.dueDate);
+                      return taskDate.getDate() === day && taskDate.getMonth() === currentDate.getMonth();
+                    });
                     
                     return (
-                      <div key={i} className={`
-                        p-2 h-24 border border-border rounded-lg
-                        ${day <= 31 ? 'hover:bg-muted/50 cursor-pointer' : 'bg-muted/20'}
-                      `}>
-                        {day <= 31 && (
-                          <>
-                            <div className="text-sm font-medium mb-1">{day}</div>
-                            {hasTasks && (
-                              <div className="space-y-1">
-                                <div className="h-1 bg-primary rounded"></div>
-                                <div className="h-1 bg-success rounded"></div>
+                      <div 
+                        key={i} 
+                        className={`min-h-[120px] p-3 border border-border/30 rounded-lg hover:bg-card/50 transition-all duration-200 cursor-pointer ${
+                          isToday ? 'bg-primary/10 border-primary/30 shadow-glow' : 'bg-card/20'
+                        }`}
+                      >
+                        <div className={`text-sm font-medium mb-2 flex items-center justify-between ${
+                          isToday ? 'text-primary' : 'text-foreground'
+                        }`}>
+                          <span>{day}</span>
+                          {tasksForDay.length > 0 && (
+                            <Badge variant="secondary" className="h-5 w-5 p-0 text-xs flex items-center justify-center">
+                              {tasksForDay.length}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {tasksForDay.slice(0, 3).map((task) => (
+                            <div 
+                              key={task.id} 
+                              className={`text-xs p-2 rounded-md ${getStatusColor(task.status)} truncate shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
+                              title={task.title}
+                            >
+                              <div className="flex items-center gap-1">
+                                <div className={`h-1.5 w-1.5 rounded-full ${getPriorityColor(task.priority)} bg-current`} />
+                                {task.title}
                               </div>
-                            )}
-                          </>
-                        )}
+                            </div>
+                          ))}
+                          {tasksForDay.length > 3 && (
+                            <div className="text-xs text-muted-foreground px-2 py-1">
+                              +{tasksForDay.length - 3} more
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Calendar Legend */}
+                <div className="mt-6 pt-4 border-t border-border/30">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Task Status</h4>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-muted"></div>
+                      <span className="text-xs text-muted-foreground">To Do</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-primary"></div>
+                      <span className="text-xs text-muted-foreground">In Progress</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-success"></div>
+                      <span className="text-xs text-muted-foreground">Completed</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+      
+      <FloatingActionButton />
+      <KeyboardShortcuts />
+      <StatusIndicator />
     </div>
   );
 };

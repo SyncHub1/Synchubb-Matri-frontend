@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Command, Kbd } from "lucide-react";
+import { Command } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,7 +70,7 @@ const KeyboardShortcuts = () => {
         </div>
         
         <div className="text-xs text-muted-foreground text-center pt-4 border-t border-border/30">
-          Press <Kbd className="inline mx-1">⌘ + /</Kbd> to toggle this dialog
+          Press <span className="inline mx-1 px-1 py-0.5 bg-muted rounded text-xs font-mono">⌘ + /</span> to toggle this dialog
         </div>
       </DialogContent>
     </Dialog>

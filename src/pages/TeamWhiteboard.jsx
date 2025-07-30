@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Canvas as FabricCanvas, Circle, Rect, PencilBrush } from "fabric";
 import { 
   ChevronLeft, 
+  MousePointer2,
   Pen, 
   Square, 
   Circle as CircleIcon, 
@@ -13,11 +14,21 @@ import {
   Download, 
   Users,
   Palette,
-  MoreVertical,
   Save,
-  Settings,
   Plus,
-  Trash2
+  Trash2,
+  Menu,
+  Share,
+  BookOpen,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  Diamond,
+  Triangle,
+  Minus,
+  Hand,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,9 +45,10 @@ const TeamWhiteboard = () => {
   const { id } = useParams();
   const canvasRef = useRef(null);
   const [fabricCanvas, setFabricCanvas] = useState(null);
-  const [selectedTool, setSelectedTool] = useState("pen");
-  const [selectedColor, setSelectedColor] = useState("#6366f1");
+  const [selectedTool, setSelectedTool] = useState("pointer");
+  const [selectedColor, setSelectedColor] = useState("#1e1e1e");
   const [brushSize, setBrushSize] = useState(3);
+  const [zoom, setZoom] = useState(100);
   
   const collaborators = [
     { name: "Alex", avatar: "A", color: "#3b82f6", isActive: true },
@@ -46,24 +58,26 @@ const TeamWhiteboard = () => {
   ];
 
   const tools = [
-    { id: "pen", icon: Pen, label: "Pen" },
-    { id: "rectangle", icon: Square, label: "Rectangle" },
-    { id: "circle", icon: CircleIcon, label: "Circle" },
-    { id: "text", icon: Type, label: "Text" },
+    { id: "pointer", icon: MousePointer2, label: "Selection", shortcut: "1" },
+    { id: "hand", icon: Hand, label: "Hand", shortcut: "2" },
+    { id: "rectangle", icon: Square, label: "Rectangle", shortcut: "3" },
+    { id: "circle", icon: CircleIcon, label: "Circle", shortcut: "4" },
+    { id: "diamond", icon: Diamond, label: "Diamond", shortcut: "5" },
+    { id: "triangle", icon: Triangle, label: "Triangle", shortcut: "6" },
+    { id: "arrow", icon: ArrowRight, label: "Arrow", shortcut: "7" },
+    { id: "line", icon: Minus, label: "Line", shortcut: "8" },
+    { id: "pen", icon: Pen, label: "Draw", shortcut: "9" },
+    { id: "text", icon: Type, label: "Text", shortcut: "0" },
+    { id: "image", icon: ImageIcon, label: "Image" },
     { id: "eraser", icon: Eraser, label: "Eraser" }
-  ];
-
-  const colors = [
-    "#000000", "#ffffff", "#6366f1", "#3b82f6", "#10b981", 
-    "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#6b7280"
   ];
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: 800,
-      height: 600,
+      width: window.innerWidth,
+      height: window.innerHeight - 80,
       backgroundColor: "#ffffff",
     });
 
@@ -73,7 +87,7 @@ const TeamWhiteboard = () => {
     canvas.freeDrawingBrush.width = brushSize;
 
     setFabricCanvas(canvas);
-    toast("Whiteboard ready! Start creating!");
+    toast("Whiteboard ready! Pick a tool & Start drawing!");
 
     return () => {
       canvas.dispose();
@@ -84,6 +98,7 @@ const TeamWhiteboard = () => {
     if (!fabricCanvas) return;
 
     fabricCanvas.isDrawingMode = selectedTool === "pen";
+    fabricCanvas.selection = selectedTool === "pointer";
     
     if (selectedTool === "pen" && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = selectedColor;
@@ -98,9 +113,9 @@ const TeamWhiteboard = () => {
 
     if (tool === "rectangle") {
       const rect = new Rect({
-        left: 100,
-        top: 100,
-        fill: selectedColor,
+        left: 200,
+        top: 200,
+        fill: "transparent",
         width: 100,
         height: 100,
         stroke: selectedColor,
@@ -111,8 +126,8 @@ const TeamWhiteboard = () => {
       fabricCanvas.renderAll();
     } else if (tool === "circle") {
       const circle = new Circle({
-        left: 100,
-        top: 100,
+        left: 200,
+        top: 200,
         fill: "transparent",
         radius: 50,
         stroke: selectedColor,
@@ -121,10 +136,6 @@ const TeamWhiteboard = () => {
       fabricCanvas.add(circle);
       fabricCanvas.setActiveObject(circle);
       fabricCanvas.renderAll();
-    } else if (tool === "eraser") {
-      fabricCanvas.isDrawingMode = false;
-      // Enable selection mode for eraser
-      fabricCanvas.selection = true;
     }
   };
 
@@ -133,7 +144,7 @@ const TeamWhiteboard = () => {
     fabricCanvas.clear();
     fabricCanvas.backgroundColor = "#ffffff";
     fabricCanvas.renderAll();
-    toast("Whiteboard cleared!");
+    toast("Canvas cleared!");
   };
 
   const handleUndo = () => {
@@ -158,338 +169,227 @@ const TeamWhiteboard = () => {
     toast("Whiteboard saved!");
   };
 
-  const deleteSelectedObject = () => {
-    if (!fabricCanvas) return;
-    const activeObject = fabricCanvas.getActiveObject();
-    if (activeObject) {
-      fabricCanvas.remove(activeObject);
-      fabricCanvas.renderAll();
-    }
-  };
-
   // Handle canvas resize
   useEffect(() => {
     const handleResize = () => {
       if (fabricCanvas && canvasRef.current) {
-        const container = canvasRef.current.parentElement;
-        const containerWidth = container.clientWidth - 32; // Account for padding
-        const containerHeight = container.clientHeight - 32;
-        
         fabricCanvas.setDimensions({
-          width: Math.min(containerWidth, 1200),
-          height: Math.min(containerHeight, 800)
+          width: window.innerWidth,
+          height: window.innerHeight - 80
         });
         fabricCanvas.renderAll();
       }
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initial resize
+    handleResize();
 
     return () => window.removeEventListener('resize', handleResize);
   }, [fabricCanvas]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-nav-background border-b border-border px-4 sm:px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <MobileNavigation />
-            <Link to={`/teams/${id}/chat`} className="hidden sm:flex items-center gap-2 text-nav-foreground hover:text-nav-active">
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center">
-                <Palette className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold">Team Whiteboard</h1>
-                <p className="text-sm text-muted-foreground">Collaborative drawing space</p>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      {/* Mobile Menu Button - Top Left */}
+      <div className="fixed top-6 left-6 z-50 lg:hidden">
+        <Button variant="outline" size="icon" className="bg-white shadow-md">
+          <Menu className="h-4 w-4" />
+        </Button>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 mr-4">
-              {collaborators.filter(c => c.isActive).map((collab) => (
-                <div key={collab.name} className="relative">
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary/50 transition-all duration-200" style={{ '--tw-ring-color': collab.color }}>
-                    <AvatarFallback className="text-xs font-medium">{collab.avatar}</AvatarFallback>
-                  </Avatar>
-                  <div 
-                    className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-nav-background animate-pulse"
-                    style={{ backgroundColor: collab.color }}
-                  ></div>
-                </div>
-              ))}
-            </div>
-            <Button variant="purple" size="sm" onClick={handleSave} className="shadow-primary">
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSave} className="border-primary/30 hover:bg-primary/10">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <QuickActions />
-          </div>
-        </div>
-      </header>
+      {/* Desktop Back Button - Top Left */}
+      <div className="fixed top-6 left-6 z-50 hidden lg:block">
+        <Link to={`/teams/${id}/chat`}>
+          <Button variant="outline" size="icon" className="bg-white shadow-md">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Toolbar */}
-        <aside className="hidden sm:block w-20 bg-gradient-card border-r border-border/50 p-4 space-y-6 backdrop-blur-sm">
-          {/* Drawing Tools */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tools</h3>
-            {tools.map((tool) => (
+      {/* Top Right Actions */}
+      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <Button variant="outline" className="bg-white shadow-md">
+          <BookOpen className="h-4 w-4 mr-2" />
+          Library
+        </Button>
+        <Button className="bg-primary text-white shadow-md">
+          <Share className="h-4 w-4 mr-2" />
+          Share
+        </Button>
+      </div>
+
+      {/* Main Toolbar - Top Center */}
+      <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex items-center gap-1">
+          {tools.map((tool, index) => (
+            <div key={tool.id} className="relative">
               <Button
-                key={tool.id}
-                variant={selectedTool === tool.id ? "purple" : "ghost"}
+                variant={selectedTool === tool.id ? "default" : "ghost"}
                 size="icon"
-                className={`w-12 h-12 transition-all duration-200 ${
+                className={`h-10 w-10 relative group ${
                   selectedTool === tool.id 
-                    ? "shadow-primary ring-2 ring-primary/30" 
-                    : "hover:bg-card hover:scale-105"
+                    ? "bg-primary text-white shadow-md" 
+                    : "hover:bg-gray-100"
                 }`}
                 onClick={() => handleToolClick(tool.id)}
-                title={tool.label}
+                title={`${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`}
               >
-                <tool.icon className="h-5 w-5" />
+                <tool.icon className="h-4 w-4" />
+                {tool.shortcut && (
+                  <span className="absolute -bottom-1 -right-1 text-xs bg-gray-600 text-white rounded px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {tool.shortcut}
+                  </span>
+                )}
               </Button>
+              {index === 1 || index === 9 ? (
+                <div className="w-px h-6 bg-gray-200 mx-1" />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Left Controls */}
+      <div className="fixed bottom-6 left-6 z-50 flex items-center gap-3">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleUndo}
+            title="Undo"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => {}}
+            title="Redo"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setZoom(Math.max(10, zoom - 10))}
+          >
+            -
+          </Button>
+          <span className="text-sm font-mono min-w-[50px] text-center">{zoom}%</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setZoom(Math.min(500, zoom + 10))}
+          >
+            +
+          </Button>
+        </div>
+      </div>
+
+      {/* Bottom Right Help */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 text-sm text-gray-600 max-w-xs">
+          To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool
+        </div>
+      </div>
+
+      {/* Active Collaborators - Bottom Center */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex items-center gap-2">
+          {collaborators.filter(c => c.isActive).map((collab) => (
+            <div key={collab.name} className="relative">
+              <Avatar className="h-8 w-8 ring-2 ring-white" style={{ backgroundColor: collab.color }}>
+                <AvatarFallback className="text-xs font-medium text-white">{collab.avatar}</AvatarFallback>
+              </Avatar>
+              <div 
+                className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white"
+                style={{ backgroundColor: collab.color }}
+              ></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Color Picker - Floating */}
+      {selectedTool !== "pointer" && selectedTool !== "hand" && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex items-center gap-1">
+            {["#1e1e1e", "#e03131", "#2f9e44", "#1971c2", "#f08c00", "#ae3ec9", "#495057", "#ffffff"].map((color) => (
+              <button
+                key={color}
+                className={`w-8 h-8 rounded border-2 ${
+                  selectedColor === color 
+                    ? 'border-gray-400 ring-2 ring-blue-300' 
+                    : 'border-gray-200'
+                }`}
+                style={{ backgroundColor: color }}
+                onClick={() => setSelectedColor(color)}
+              />
             ))}
           </div>
+        </div>
+      )}
 
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-          {/* Action Tools */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</h3>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-12 h-12 hover:bg-card hover:scale-105 transition-all duration-200" 
-              onClick={handleUndo} 
-              title="Undo"
-            >
-              <Undo2 className="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-12 h-12 hover:bg-destructive/10 hover:text-destructive hover:scale-105 transition-all duration-200" 
-              onClick={deleteSelectedObject} 
-              title="Delete Selected"
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-12 h-12 hover:bg-warning/10 hover:text-warning hover:scale-105 transition-all duration-200" 
-              onClick={handleClear} 
-              title="Clear All"
-            >
-              <Eraser className="h-5 w-5" />
-            </Button>
-          </div>
-        </aside>
-
-        {/* Main Canvas Area */}
-        <main className="flex-1 p-6">
-          <div className="h-full bg-white rounded-xl shadow-glow border border-border/30 relative overflow-hidden backdrop-blur-sm">
-            {/* Canvas Header */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-border/20">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
-                  <span className="text-xs font-medium text-foreground">Live Collaboration</span>
-                </div>
-              </div>
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-border/20">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {selectedTool === "pen" ? `Brush: ${brushSize}px` : `Tool: ${selectedTool}`}
-                </span>
+      {/* Main Canvas */}
+      <div className="absolute inset-0 pt-16">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full cursor-crosshair"
+        />
+        
+        {/* Live Cursors */}
+        {collaborators.filter(c => c.isActive && c.name !== "You").map((collab, index) => (
+          <div
+            key={collab.name}
+            className="absolute pointer-events-none"
+            style={{
+              left: `${20 + index * 50}%`,
+              top: `${30 + index * 40}%`,
+              color: collab.color
+            }}
+          >
+            <div className="relative">
+              <svg width="16" height="16" viewBox="0 0 16 16" className="absolute">
+                <path
+                  d="M0 0L16 6L6 16Z"
+                  fill={collab.color}
+                  stroke="white"
+                  strokeWidth="1"
+                />
+              </svg>
+              <div 
+                className="ml-4 text-xs font-medium px-2 py-1 rounded shadow-md text-white"
+                style={{ backgroundColor: collab.color }}
+              >
+                {collab.name}
               </div>
             </div>
-
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full"
-            />
-            
-            {/* Live Cursors */}
-            {collaborators.filter(c => c.isActive && c.name !== "You").map((collab, index) => (
-              <div
-                key={collab.name}
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${20 + index * 50}%`,
-                  top: `${30 + index * 40}%`,
-                  color: collab.color
-                }}
-              >
-                <div className="relative">
-                  <svg width="20" height="20" viewBox="0 0 20 20" className="absolute">
-                    <path
-                      d="M0 0L20 7L7 20Z"
-                      fill={collab.color}
-                      stroke="white"
-                      strokeWidth="1"
-                    />
-                  </svg>
-                  <Badge 
-                    variant="secondary" 
-                    className="ml-5 text-xs"
-                    style={{ backgroundColor: collab.color, color: 'white' }}
-                  >
-                    {collab.name}
-                  </Badge>
-                </div>
-              </div>
-            ))}
           </div>
-        </main>
-
-        {/* Properties Panel */}
-        <aside className="hidden lg:block w-72 bg-gradient-card border-l border-border/50 p-6 space-y-6 backdrop-blur-sm">
-          {/* Color Palette */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/30 shadow-card">
-            <CardContent className="p-5">
-              <h3 className="font-semibold mb-4 text-primary">Color Palette</h3>
-              <div className="grid grid-cols-5 gap-3">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    className={`w-10 h-10 rounded-xl border-2 transition-all duration-200 hover:scale-110 ${
-                      selectedColor === color 
-                        ? 'border-primary ring-2 ring-primary/30 shadow-glow' 
-                        : 'border-border/30 hover:border-primary/50'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                  />
-                ))}
-              </div>
-              
-              <div className="mt-5">
-                <label className="text-sm font-medium mb-3 block text-muted-foreground">Custom Color</label>
-                <input
-                  type="color"
-                  value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-border/30 bg-transparent cursor-pointer"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Brush Settings */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/30 shadow-card">
-            <CardContent className="p-5">
-              <h3 className="font-semibold mb-4 text-primary">Brush Settings</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-medium text-muted-foreground">Size</label>
-                    <span className="text-sm font-mono bg-muted px-2 py-1 rounded">{brushSize}px</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
-                  />
-                </div>
-                
-                <div className="flex justify-center p-4 bg-white/5 rounded-lg">
-                  <div
-                    className="rounded-full border border-border/30 shadow-md transition-all duration-200"
-                    style={{
-                      width: `${Math.max(brushSize * 2, 16)}px`,
-                      height: `${Math.max(brushSize * 2, 16)}px`,
-                      backgroundColor: selectedColor
-                    }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Tools */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/30 shadow-card">
-            <CardContent className="p-5">
-              <h3 className="font-semibold mb-4 text-primary">Quick Tools</h3>
-              <div className="space-y-2">
-                <Button 
-                  variant={selectedTool === "pen" ? "purple" : "outline"} 
-                  className="w-full justify-start transition-all duration-200 hover:scale-105" 
-                  size="sm"
-                  onClick={() => handleToolClick("pen")}
-                >
-                  <Pen className="h-4 w-4 mr-2" />
-                  Free Draw
-                </Button>
-                <Button 
-                  variant={selectedTool === "rectangle" ? "purple" : "outline"} 
-                  className="w-full justify-start transition-all duration-200 hover:scale-105" 
-                  size="sm"
-                  onClick={() => handleToolClick("rectangle")}
-                >
-                  <Square className="h-4 w-4 mr-2" />
-                  Rectangle
-                </Button>
-                <Button 
-                  variant={selectedTool === "circle" ? "purple" : "outline"} 
-                  className="w-full justify-start transition-all duration-200 hover:scale-105" 
-                  size="sm"
-                  onClick={() => handleToolClick("circle")}
-                >
-                  <CircleIcon className="h-4 w-4 mr-2" />
-                  Circle
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Active Collaborators */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/30 shadow-card">
-            <CardContent className="p-5">
-              <h3 className="font-semibold mb-4 text-primary">Collaborators</h3>
-              <div className="space-y-3">
-                {collaborators.map((collab) => (
-                  <div key={collab.name} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200">
-                    <div
-                      className={`h-3 w-3 rounded-full transition-all duration-200 ${
-                        collab.isActive ? 'animate-pulse shadow-glow' : 'opacity-30'
-                      }`}
-                      style={{ backgroundColor: collab.color }}
-                    />
-                    <Avatar className="h-8 w-8 ring-2 ring-border/30">
-                      <AvatarFallback className="text-xs font-medium">{collab.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <span className={`text-sm font-medium ${collab.isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {collab.name}
-                      </span>
-                      <div className="text-xs text-muted-foreground">
-                        {collab.isActive ? 'Online' : 'Offline'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
+        ))}
       </div>
-      
-      <FloatingActionButton />
-      <KeyboardShortcuts />
-      <StatusIndicator />
+
+      {/* Welcome Message - Center */}
+      {fabricCanvas && fabricCanvas.getObjects().length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center text-gray-500">
+            <h2 className="text-2xl font-light mb-2">Pick a tool & Start drawing!</h2>
+            <p className="text-sm">Use the toolbar above to select tools and start creating</p>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Components for Mobile */}
+      <div className="hidden">
+        <MobileNavigation />
+        <FloatingActionButton />
+        <QuickActions />
+        <KeyboardShortcuts />
+        <StatusIndicator />
+      </div>
     </div>
   );
 };

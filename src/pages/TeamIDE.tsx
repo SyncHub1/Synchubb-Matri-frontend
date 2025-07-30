@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { 
   ChevronLeft, 
@@ -11,7 +11,10 @@ import {
   Search,
   Users,
   MessageSquare,
-  Download
+  Download,
+  Terminal,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +26,8 @@ import MobileNavigation from "@/components/MobileNavigation";
 const TeamIDE = () => {
   const { id } = useParams();
   const [activeFile, setActiveFile] = useState("app.js");
+  const [terminalExpanded, setTerminalExpanded] = useState(false);
+  const editorRef = useRef(null);
   const [code, setCode] = useState(`// Welcome to SyncHubb Team IDE
 // Collaborative coding environment for your team
 
@@ -96,6 +101,23 @@ export default EcoTracker;`);
     { name: "Mike", avatar: "M", color: "bg-purple-500", cursor: { line: 32, column: 12 } }
   ];
 
+  const runCode = () => {
+    console.log("Running code...");
+    setTerminalExpanded(true);
+  };
+
+  const saveFile = () => {
+    console.log("Saving file:", activeFile);
+    localStorage.setItem(`ide_file_${activeFile}`, code);
+  };
+
+  useEffect(() => {
+    const savedCode = localStorage.getItem(`ide_file_${activeFile}`);
+    if (savedCode) {
+      setCode(savedCode);
+    }
+  }, [activeFile]);
+
   const renderFileTree = (files: any[], level = 0) => {
     return files.map((file, index) => (
       <div key={index} style={{ marginLeft: level * 16 }}>
@@ -145,11 +167,11 @@ export default EcoTracker;`);
                 </div>
               ))}
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={saveFile}>
               <Save className="h-4 w-4 mr-2" />
               Save
             </Button>
-            <Button variant="purple" size="sm">
+            <Button variant="purple" size="sm" onClick={runCode}>
               <Play className="h-4 w-4 mr-2" />
               Run
             </Button>
@@ -189,38 +211,84 @@ export default EcoTracker;`);
         {/* Editor Area */}
         <main className="flex-1 flex flex-col">
           {/* Editor Tabs */}
-          <div className="bg-nav-background border-b border-border px-4 py-2 flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-background rounded px-3 py-1">
-              <File className="h-3 w-3" />
-              <span className="text-sm">{activeFile}</span>
+          <div className="bg-nav-background border-b border-border px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-background rounded px-3 py-1">
+                <File className="h-3 w-3" />
+                <span className="text-sm">{activeFile}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setTerminalExpanded(!terminalExpanded)}
+              >
+                <Terminal className="h-4 w-4 mr-2" />
+                Terminal
+              </Button>
             </div>
           </div>
 
-          {/* Code Editor */}
-          <div className="flex-1 relative">
-            <Textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-full resize-none border-none font-mono text-sm bg-background"
-              style={{ minHeight: "100%" }}
-            />
-            
-            {/* Collaboration Cursors */}
-            {collaborators.map((collab) => (
-              <div
-                key={collab.name}
-                className="absolute pointer-events-none"
-                style={{
-                  top: `${collab.cursor.line * 1.5}rem`,
-                  left: `${collab.cursor.column * 0.6}rem`
+          {/* Editor and Terminal Split */}
+          <div className="flex-1 flex flex-col">
+            {/* Code Editor */}
+            <div className={`${terminalExpanded ? 'flex-1' : 'flex-1'} relative bg-background`}>
+              <textarea
+                ref={editorRef}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="w-full h-full resize-none border-none font-mono text-sm bg-background p-4 outline-none"
+                style={{ 
+                  minHeight: "100%",
+                  lineHeight: "1.5",
+                  tabSize: 2
                 }}
-              >
-                <div className={`w-0.5 h-5 ${collab.color}`}></div>
-                <Badge variant="secondary" className={`text-xs ${collab.color} text-white border-none`}>
-                  {collab.name}
-                </Badge>
+                spellCheck={false}
+              />
+              
+              {/* Collaboration Cursors */}
+              {collaborators.map((collab) => (
+                <div
+                  key={collab.name}
+                  className="absolute pointer-events-none"
+                  style={{
+                    top: `${collab.cursor.line * 1.5}rem`,
+                    left: `${collab.cursor.column * 0.6}rem`
+                  }}
+                >
+                  <div className={`w-0.5 h-5 ${collab.color}`}></div>
+                  <Badge variant="secondary" className={`text-xs ${collab.color} text-white border-none`}>
+                    {collab.name}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+
+            {/* Terminal Section */}
+            {terminalExpanded && (
+              <div className="h-64 border-t border-border bg-nav-background flex flex-col">
+                <div className="flex items-center justify-between p-2 border-b border-border">
+                  <h3 className="text-sm font-medium">Terminal</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6"
+                    onClick={() => setTerminalExpanded(false)}
+                  >
+                    <Minimize2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="flex-1 bg-black text-green-400 p-4 font-mono text-sm overflow-y-auto">
+                  <div>$ npm run dev</div>
+                  <div>Starting development server...</div>
+                  <div className="text-green-500">✓ Compiled successfully</div>
+                  <div>Local: http://localhost:3000</div>
+                  <div>Network: http://192.168.1.100:3000</div>
+                  <div className="mt-2">$ </div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </main>
 
@@ -272,17 +340,20 @@ export default EcoTracker;`);
             </CardContent>
           </Card>
 
-          {/* Terminal Output */}
+          {/* Project Info */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Terminal</CardTitle>
+              <CardTitle className="text-sm">Project Info</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="bg-black text-green-400 p-3 rounded text-xs font-mono max-h-32 overflow-y-auto">
-                <div>$ npm run dev</div>
-                <div>Starting development server...</div>
-                <div>✓ Compiled successfully</div>
-                <div>Local: http://localhost:3000</div>
+            <CardContent className="space-y-2">
+              <div className="text-xs">
+                <span className="font-medium">Lines:</span> {code.split('\n').length}
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">Characters:</span> {code.length}
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">Language:</span> JavaScript
               </div>
             </CardContent>
           </Card>

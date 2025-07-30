@@ -11,7 +11,10 @@ import {
   AlertCircle,
   Filter,
   Search,
-  MoreVertical
+  MoreVertical,
+  Trash2,
+  Edit2,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +22,26 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamTasks = () => {
   const { id } = useParams();
   const [selectedTab, setSelectedTab] = useState("board");
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    priority: "medium",
+    assignee: "You",
+    dueDate: "",
+    tags: []
+  });
 
-  const tasks = [
+  const [tasks, setTasks] = useState([
     {
       id: "1",
       title: "Implement Carbon Calculator API",
@@ -81,9 +97,9 @@ const TeamTasks = () => {
       tags: ["frontend", "charts"],
       progress: 0
     }
-  ];
+  ]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "completed": return "bg-success text-success-foreground";
       case "in-progress": return "bg-primary text-primary-foreground";
@@ -92,7 +108,7 @@ const TeamTasks = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority) => {
     switch (priority) {
       case "high": return "text-destructive";
       case "medium": return "text-warning";
@@ -101,33 +117,87 @@ const TeamTasks = () => {
     }
   };
 
-  const StatusColumn = ({ status, title, tasks }: { status: string; title: string; tasks: any[] }) => (
-    <div className="flex-1 space-y-4">
+  const addTask = () => {
+    if (!newTask.title.trim()) return;
+    
+    const task = {
+      id: Date.now().toString(),
+      title: newTask.title,
+      description: newTask.description,
+      status: "todo",
+      priority: newTask.priority,
+      assignee: { name: newTask.assignee, avatar: newTask.assignee[0] },
+      dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
+      tags: newTask.tags,
+      progress: 0
+    };
+
+    setTasks([...tasks, task]);
+    setNewTask({
+      title: "",
+      description: "",
+      priority: "medium",
+      assignee: "You",
+      dueDate: "",
+      tags: []
+    });
+    setIsAddingTask(false);
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
+
+  const toggleTaskStatus = (taskId) => {
+    setTasks(tasks.map(task => {
+      if (task.id === taskId) {
+        const newStatus = task.status === "completed" ? "todo" : 
+                         task.status === "todo" ? "in-progress" : "completed";
+        return { ...task, status: newStatus };
+      }
+      return task;
+    }));
+  };
+
+  const StatusColumn = ({ status, title, tasks }) => (
+    <div className="flex-1 space-y-4 min-w-[280px]">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           {title} ({tasks.length})
         </h3>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-6 w-6"
+          onClick={() => setIsAddingTask(true)}
+        >
           <Plus className="h-3 w-3" />
         </Button>
       </div>
       
       <div className="space-y-3">
         {tasks.map((task) => (
-          <Card key={task.id} className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card key={task.id} className="hover:shadow-md transition-shadow cursor-pointer group">
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                    <MoreVertical className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6"
+                      onClick={() => deleteTask(task.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
                 
                 <div className="flex flex-wrap gap-1">
-                  {task.tags.map((tag: string) => (
+                  {task.tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
@@ -199,11 +269,72 @@ const TeamTasks = () => {
             <Button variant="outline" size="icon" className="hidden sm:flex">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button variant="purple" className="hidden sm:flex">
-              <Plus className="h-4 w-4 mr-2" />
-              New Task
-            </Button>
-            <Button variant="purple" size="icon" className="sm:hidden">
+            <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
+              <DialogTrigger asChild>
+                <Button variant="purple" className="hidden sm:flex">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Task</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                      placeholder="Enter task title"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                      placeholder="Enter task description"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select value={newTask.priority} onValueChange={(value) => setNewTask({...newTask, priority: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="dueDate">Due Date</Label>
+                      <Input
+                        id="dueDate"
+                        type="date"
+                        value={newTask.dueDate}
+                        onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsAddingTask(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={addTask}>
+                      Create Task
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="purple" size="icon" className="sm:hidden" onClick={() => setIsAddingTask(true)}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -241,13 +372,14 @@ const TeamTasks = () => {
           <TabsContent value="list" className="space-y-4">
             <div className="space-y-2">
               {tasks.map((task) => (
-                <Card key={task.id} className="hover:shadow-md transition-shadow">
+                <Card key={task.id} className="hover:shadow-md transition-shadow group">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8"
+                        onClick={() => toggleTaskStatus(task.id)}
                       >
                         {task.status === "completed" ? (
                           <CheckCircle2 className="h-5 w-5 text-success" />
@@ -284,8 +416,13 @@ const TeamTasks = () => {
                         </div>
                       </div>
                       
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100"
+                        onClick={() => deleteTask(task.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </CardContent>

@@ -9,8 +9,8 @@ import TeamDiscovery from "./pages/TeamDiscovery";
 import TeamChat from "./pages/TeamChat";
 import TeamIDE from "./pages/TeamIDE";
 import TeamVideo from "./pages/TeamVideo";
-import TeamTasks from "./pages/TeamTasks";
-import TeamWhiteboard from "./pages/TeamWhiteboard";
+import TeamTasks from "./pages/TeamTasks.jsx";
+import TeamWhiteboard from "./pages/TeamWhiteboard.jsx";
 import TeamAnalytics from "./pages/TeamAnalytics";
 import CreateTeam from "./pages/CreateTeam";
 

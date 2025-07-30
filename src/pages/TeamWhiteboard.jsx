@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Canvas as FabricCanvas, Circle, Rect, PencilBrush } from "fabric";
 import { 
   ChevronLeft, 
   Pen, 
   Square, 
-  Circle, 
+  Circle as CircleIcon, 
   Type, 
   Eraser, 
   Undo2, 
@@ -15,18 +16,20 @@ import {
   MoreVertical,
   Save,
   Settings,
-  Plus
+  Plus,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import MobileNavigation from "@/components/MobileNavigation";
+import { toast } from "sonner";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const canvasRef = useRef(null);
+  const [fabricCanvas, setFabricCanvas] = useState(null);
   const [selectedTool, setSelectedTool] = useState("pen");
   const [selectedColor, setSelectedColor] = useState("#6366f1");
   const [brushSize, setBrushSize] = useState(3);
@@ -41,7 +44,7 @@ const TeamWhiteboard = () => {
   const tools = [
     { id: "pen", icon: Pen, label: "Pen" },
     { id: "rectangle", icon: Square, label: "Rectangle" },
-    { id: "circle", icon: Circle, label: "Circle" },
+    { id: "circle", icon: CircleIcon, label: "Circle" },
     { id: "text", icon: Type, label: "Text" },
     { id: "eraser", icon: Eraser, label: "Eraser" }
   ];
@@ -52,73 +55,135 @@ const TeamWhiteboard = () => {
   ];
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvasRef.current) return;
 
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const canvas = new FabricCanvas(canvasRef.current, {
+      width: 800,
+      height: 600,
+      backgroundColor: "#ffffff",
+    });
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Initialize the freeDrawingBrush
+    canvas.freeDrawingBrush = new PencilBrush(canvas);
+    canvas.freeDrawingBrush.color = selectedColor;
+    canvas.freeDrawingBrush.width = brushSize;
 
-    // Set default canvas styles
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.lineWidth = brushSize;
-    context.strokeStyle = selectedColor;
+    setFabricCanvas(canvas);
+    toast("Whiteboard ready! Start creating!");
 
-    // Clear canvas with white background
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    return () => {
+      canvas.dispose();
+    };
   }, []);
 
-  const startDrawing = (e: React.MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas || selectedTool !== "pen") return;
+  useEffect(() => {
+    if (!fabricCanvas) return;
 
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    fabricCanvas.isDrawingMode = selectedTool === "pen";
+    
+    if (selectedTool === "pen" && fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush.color = selectedColor;
+      fabricCanvas.freeDrawingBrush.width = brushSize;
+    }
+  }, [selectedTool, selectedColor, brushSize, fabricCanvas]);
 
-    setIsDrawing(true);
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const handleToolClick = (tool) => {
+    setSelectedTool(tool);
 
-    context.beginPath();
-    context.moveTo(x, y);
+    if (!fabricCanvas) return;
+
+    if (tool === "rectangle") {
+      const rect = new Rect({
+        left: 100,
+        top: 100,
+        fill: selectedColor,
+        width: 100,
+        height: 100,
+        stroke: selectedColor,
+        strokeWidth: 2
+      });
+      fabricCanvas.add(rect);
+      fabricCanvas.setActiveObject(rect);
+      fabricCanvas.renderAll();
+    } else if (tool === "circle") {
+      const circle = new Circle({
+        left: 100,
+        top: 100,
+        fill: "transparent",
+        radius: 50,
+        stroke: selectedColor,
+        strokeWidth: 2
+      });
+      fabricCanvas.add(circle);
+      fabricCanvas.setActiveObject(circle);
+      fabricCanvas.renderAll();
+    } else if (tool === "eraser") {
+      fabricCanvas.isDrawingMode = false;
+      // Enable selection mode for eraser
+      fabricCanvas.selection = true;
+    }
   };
 
-  const draw = (e: React.MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas || !isDrawing || selectedTool !== "pen") return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    context.lineWidth = brushSize;
-    context.strokeStyle = selectedColor;
-    context.lineTo(x, y);
-    context.stroke();
+  const handleClear = () => {
+    if (!fabricCanvas) return;
+    fabricCanvas.clear();
+    fabricCanvas.backgroundColor = "#ffffff";
+    fabricCanvas.renderAll();
+    toast("Whiteboard cleared!");
   };
 
-  const stopDrawing = () => {
-    setIsDrawing(false);
+  const handleUndo = () => {
+    if (!fabricCanvas) return;
+    const objects = fabricCanvas.getObjects();
+    if (objects.length > 0) {
+      fabricCanvas.remove(objects[objects.length - 1]);
+      fabricCanvas.renderAll();
+    }
   };
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+  const handleSave = () => {
+    if (!fabricCanvas) return;
+    const dataURL = fabricCanvas.toDataURL({
+      format: 'png',
+      quality: 1
+    });
+    const link = document.createElement('a');
+    link.download = 'whiteboard.png';
+    link.href = dataURL;
+    link.click();
+    toast("Whiteboard saved!");
   };
+
+  const deleteSelectedObject = () => {
+    if (!fabricCanvas) return;
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.remove(activeObject);
+      fabricCanvas.renderAll();
+    }
+  };
+
+  // Handle canvas resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (fabricCanvas && canvasRef.current) {
+        const container = canvasRef.current.parentElement;
+        const containerWidth = container.clientWidth - 32; // Account for padding
+        const containerHeight = container.clientHeight - 32;
+        
+        fabricCanvas.setDimensions({
+          width: Math.min(containerWidth, 1200),
+          height: Math.min(containerHeight, 800)
+        });
+        fabricCanvas.renderAll();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial resize
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fabricCanvas]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -145,7 +210,7 @@ const TeamWhiteboard = () => {
             <div className="flex items-center gap-1 mr-4">
               {collaborators.filter(c => c.isActive).map((collab) => (
                 <div key={collab.name} className="relative">
-                  <Avatar className={`h-6 w-6 ring-2`} style={{ '--tw-ring-color': collab.color } as React.CSSProperties}>
+                  <Avatar className="h-6 w-6 ring-2" style={{ '--tw-ring-color': collab.color }}>
                     <AvatarFallback className="text-xs">{collab.avatar}</AvatarFallback>
                   </Avatar>
                   <div 
@@ -155,11 +220,11 @@ const TeamWhiteboard = () => {
                 </div>
               ))}
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Save
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleSave}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -181,7 +246,7 @@ const TeamWhiteboard = () => {
                 variant={selectedTool === tool.id ? "default" : "ghost"}
                 size="icon"
                 className="w-12 h-12"
-                onClick={() => setSelectedTool(tool.id)}
+                onClick={() => handleToolClick(tool.id)}
                 title={tool.label}
               >
                 <tool.icon className="h-5 w-5" />
@@ -193,13 +258,13 @@ const TeamWhiteboard = () => {
 
           {/* Action Tools */}
           <div className="space-y-2">
-            <Button variant="ghost" size="icon" className="w-12 h-12" title="Undo">
+            <Button variant="ghost" size="icon" className="w-12 h-12" onClick={handleUndo} title="Undo">
               <Undo2 className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-12 h-12" title="Redo">
-              <Redo2 className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="w-12 h-12" onClick={deleteSelectedObject} title="Delete">
+              <Trash2 className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-12 h-12" onClick={clearCanvas} title="Clear">
+            <Button variant="ghost" size="icon" className="w-12 h-12" onClick={handleClear} title="Clear">
               <Eraser className="h-5 w-5" />
             </Button>
           </div>
@@ -210,11 +275,7 @@ const TeamWhiteboard = () => {
           <div className="h-full bg-white rounded-lg shadow-lg border border-border relative overflow-hidden">
             <canvas
               ref={canvasRef}
-              className="w-full h-full cursor-crosshair"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
+              className="w-full h-full"
             />
             
             {/* Live Cursors */}
@@ -312,20 +373,37 @@ const TeamWhiteboard = () => {
             </CardContent>
           </Card>
 
-          {/* Layers */}
+          {/* Tools */}
           <Card>
             <CardContent className="p-4">
-              <h3 className="font-semibold mb-3">Layers</h3>
+              <h3 className="font-semibold mb-3">Tools</h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-primary/10 rounded">
-                  <span className="text-sm">Layer 1</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <MoreVertical className="h-3 w-3" />
-                  </Button>
-                </div>
-                <Button variant="outline" className="w-full" size="sm">
-                  <Plus className="h-3 w-3 mr-2" />
-                  Add Layer
+                <Button 
+                  variant={selectedTool === "pen" ? "default" : "outline"} 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => handleToolClick("pen")}
+                >
+                  <Pen className="h-3 w-3 mr-2" />
+                  Free Draw
+                </Button>
+                <Button 
+                  variant={selectedTool === "rectangle" ? "default" : "outline"} 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => handleToolClick("rectangle")}
+                >
+                  <Square className="h-3 w-3 mr-2" />
+                  Rectangle
+                </Button>
+                <Button 
+                  variant={selectedTool === "circle" ? "default" : "outline"} 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => handleToolClick("circle")}
+                >
+                  <CircleIcon className="h-3 w-3 mr-2" />
+                  Circle
                 </Button>
               </div>
             </CardContent>

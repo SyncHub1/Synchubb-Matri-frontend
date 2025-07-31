@@ -19,7 +19,7 @@ const CreateTeam = () => {
     visibility: "public",
     maxMembers: 5,
     location: "",
-    skills: [] as string[],
+    skills: [],
   });
   const [skillInput, setSkillInput] = useState("");
 
@@ -44,7 +44,7 @@ const CreateTeam = () => {
     }
   };
 
-  const removeSkill = (skill: string) => {
+  const removeSkill = (skill) => {
     setTeamData({
       ...teamData,
       skills: teamData.skills.filter(s => s !== skill)

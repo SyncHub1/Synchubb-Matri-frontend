@@ -1,20 +1,14 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Canvas as FabricCanvas } from "fabric";
-import { ChevronLeft, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { ColorPicker } from "@/components/whiteboard/ColorPicker";
-import { CanvasControls } from "@/components/whiteboard/CanvasControls";
 import { StrokeControls } from "@/components/whiteboard/StrokeControls";
-import { CollaboratorCursors, CollaboratorAvatars } from "@/components/whiteboard/CollaboratorCursors";
+import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
-import MobileNavigation from "@/components/MobileNavigation";
-import FloatingActionButton from "@/components/FloatingActionButton";
-import QuickActions from "@/components/QuickActions";
-import KeyboardShortcuts from "@/components/KeyboardShortcuts";
-import StatusIndicator from "@/components/StatusIndicator";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -77,28 +71,14 @@ const TeamWhiteboard = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Mobile Menu Button - Top Left */}
-      <div className="fixed top-4 left-4 z-50 lg:hidden">
+      {/* Menu Button - Top Left (Excalidraw style) */}
+      <div className="fixed top-4 left-4 z-50">
         <Button variant="outline" size="icon" className="shadow-md">
           <Menu className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Desktop Back Button - Top Left */}
-      <div className="fixed top-4 left-4 z-50 hidden lg:block">
-        <Link to={`/teams/${id}/chat`}>
-          <Button variant="outline" size="icon" className="shadow-md">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-      </div>
-
-      {/* Top Right Controls */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <ThemeToggle />
-      </div>
-
-      {/* Main Toolbar - Top Center */}
+      {/* Main Toolbar - Top Center (Excalidraw style) */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
         <Toolbar 
           selectedTool={selectedTool} 
@@ -106,7 +86,18 @@ const TeamWhiteboard = () => {
         />
       </div>
 
-      {/* Color & Stroke Controls - Secondary Toolbar */}
+      {/* Top Right Controls (Share & Library like Excalidraw) */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <Button variant="default" className="shadow-md">
+          Share
+        </Button>
+        <Button variant="outline" className="shadow-md">
+          Library
+        </Button>
+        <ThemeToggle />
+      </div>
+
+      {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
       {selectedTool !== "select" && selectedTool !== "hand" && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-3">
           <ColorPicker 
@@ -120,18 +111,38 @@ const TeamWhiteboard = () => {
         </div>
       )}
 
-      {/* Left Side Controls */}
-      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
-        <CanvasControls 
-          canvas={fabricCanvas}
-          zoom={zoom}
-          onZoomChange={setZoom}
-        />
+      {/* Zoom Controls - Bottom Left (Excalidraw style) */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <div className="bg-background border border-border rounded-lg shadow-lg p-2 flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setZoom(Math.max(10, zoom - 25))}
+            title="Zoom Out"
+          >
+            <span className="text-lg font-bold">−</span>
+          </Button>
+          <span className="text-xs font-mono text-muted-foreground px-2 min-w-[3rem] text-center">
+            {zoom}%
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setZoom(Math.min(500, zoom + 25))}
+            title="Zoom In"
+          >
+            <span className="text-lg font-bold">+</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Bottom Center - Collaborators */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-        <CollaboratorAvatars collaborators={collaborators} />
+      {/* Help Button - Bottom Right (Excalidraw style) */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button variant="outline" size="icon" className="shadow-md rounded-full">
+          <span className="text-sm font-bold">?</span>
+        </Button>
       </div>
 
       {/* Main Canvas */}
@@ -148,29 +159,42 @@ const TeamWhiteboard = () => {
         <CollaboratorCursors collaborators={collaborators} />
       </div>
 
-      {/* Welcome Message - Center */}
+      {/* Welcome Message - Center (Excalidraw style) */}
       {fabricCanvas && fabricCanvas.getObjects().length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center text-muted-foreground">
-            <h2 className="text-3xl font-light mb-4">Start creating!</h2>
-            <p className="text-base">Select a tool from the toolbar above to begin drawing</p>
-            <div className="mt-6 text-sm space-y-1">
-              <p>💡 Use <kbd className="px-1 py-0.5 bg-muted rounded text-xs">V</kbd> for selection</p>
-              <p>✏️ Use <kbd className="px-1 py-0.5 bg-muted rounded text-xs">P</kbd> for pen tool</p>
-              <p>⬜ Use <kbd className="px-1 py-0.5 bg-muted rounded text-xs">R</kbd> for rectangle</p>
+            <div className="mb-8">
+              <div className="text-6xl font-bold text-primary mb-4">✕</div>
+              <h1 className="text-2xl font-semibold mb-2">EXCALIDRAW</h1>
+              <p className="text-sm text-muted-foreground mb-8">All your data is saved locally in your browser.</p>
+            </div>
+            <div className="space-y-4 text-left max-w-xs">
+              <div className="flex items-center gap-2 text-sm">
+                <span>📁</span>
+                <span>Open</span>
+                <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs">Ctrl+O</kbd>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span>❓</span>
+                <span>Help</span>
+                <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs">?</kbd>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span>👥</span>
+                <span>Live collaboration...</span>
+              </div>
+            </div>
+            <div className="mt-8 text-center">
+              <p className="text-lg font-medium mb-2">Pick a tool &</p>
+              <p className="text-lg font-medium">Start drawing!</p>
+              <p className="text-xs text-muted-foreground mt-4">
+                To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Hidden Components for Mobile */}
-      <div className="hidden">
-        <MobileNavigation />
-        <FloatingActionButton />
-        <QuickActions />
-        <KeyboardShortcuts />
-        <StatusIndicator />
-      </div>
     </div>
   );
 };

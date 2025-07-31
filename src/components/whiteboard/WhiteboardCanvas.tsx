@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection } from "fabric";
 import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
@@ -28,23 +28,46 @@ export const WhiteboardCanvas = ({
     const canvas = new FabricCanvas(canvasRef.current, {
       width: window.innerWidth,
       height: window.innerHeight,
-      backgroundColor: "var(--background)",
+      backgroundColor: "transparent",
     });
 
     canvas.freeDrawingBrush = new PencilBrush(canvas);
     canvas.freeDrawingBrush.color = selectedColor;
     canvas.freeDrawingBrush.width = brushSize;
 
-    // Enable multiple selection with ctrl/cmd key
+    // Enable multiple selection with enhanced configuration
     canvas.selection = true;
     canvas.preserveObjectStacking = true;
-    canvas.selectionColor = 'rgba(100, 100, 255, 0.3)';
-    canvas.selectionBorderColor = 'rgba(100, 100, 255, 0.8)';
+    canvas.selectionColor = 'rgba(100, 100, 255, 0.1)';
+    canvas.selectionBorderColor = 'rgba(100, 100, 255, 1)';
     canvas.selectionLineWidth = 2;
+    canvas.selectionDashArray = [5, 5];
+
+    // Enable multi-selection with Ctrl/Cmd + click
+    canvas.on('mouse:down', (e) => {
+      if (e.e.ctrlKey || e.e.metaKey) {
+        const activeObjects = canvas.getActiveObjects();
+        if (e.target && !activeObjects.includes(e.target)) {
+          canvas.setActiveObject(e.target);
+          if (activeObjects.length > 0) {
+            activeObjects.push(e.target);
+            const selection = new ActiveSelection(activeObjects, {
+              canvas: canvas,
+            });
+            canvas.setActiveObject(selection);
+          }
+        }
+      }
+    });
+
+    // Group/ungroup functionality
+    canvas.on('object:modified', () => {
+      canvas.renderAll();
+    });
 
     setFabricCanvas(canvas);
     onCanvasReady(canvas);
-    toast("Whiteboard ready! Start creating!");
+    toast("Whiteboard ready! Use Ctrl+Click for multiple selection!");
 
     return () => {
       canvas.dispose();
@@ -218,23 +241,40 @@ export const WhiteboardCanvas = ({
     fabricCanvas.renderAll();
   };
 
-  // Enhanced text editing
+  // Enhanced text editing with shape detection
   const addEditableText = (x: number = fabricCanvas?.getWidth() / 2, y: number = fabricCanvas?.getHeight() / 2) => {
     if (!fabricCanvas) return;
 
-    const text = new IText('Click to edit text', {
-      left: x - 50,
+    // Check if clicking inside a shape
+    const objectsAtPoint = fabricCanvas.getObjects().filter(obj => {
+      if (obj.type === 'textbox' || obj.type === 'i-text') return false;
+      const objBounds = obj.getBoundingRect();
+      return x >= objBounds.left && x <= objBounds.left + objBounds.width &&
+             y >= objBounds.top && y <= objBounds.top + objBounds.height;
+    });
+
+    const isInsideShape = objectsAtPoint.length > 0;
+    const textColor = isInsideShape ? '#ffffff' : selectedColor;
+
+    const text = new IText('Type here...', {
+      left: x - 40,
       top: y - 10,
-      fill: selectedColor,
-      fontSize: 20,
+      fill: textColor,
+      fontSize: 16,
       fontFamily: 'Arial',
       editable: true,
+      backgroundColor: isInsideShape ? 'rgba(0,0,0,0.5)' : 'transparent',
+      padding: isInsideShape ? 4 : 0,
     });
 
     fabricCanvas.add(text);
     fabricCanvas.setActiveObject(text);
     text.enterEditing();
     fabricCanvas.renderAll();
+    
+    if (isInsideShape) {
+      toast("Text added inside shape! Click outside to finish editing.");
+    }
   };
 
   // Handle canvas clicks for text tool

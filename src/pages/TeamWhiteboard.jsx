@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Canvas as FabricCanvas, FabricImage } from "fabric";
+import { Canvas as FabricCanvas, FabricImage, ActiveSelection, Group, util } from "fabric";
 import { Button } from "@/components/ui/button";
 import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
@@ -9,6 +9,7 @@ import { StrokeControls } from "@/components/whiteboard/StrokeControls";
 import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
+import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { toast } from "sonner";
 
 const TeamWhiteboard = () => {
@@ -18,6 +19,17 @@ const TeamWhiteboard = () => {
   const [selectedColor, setSelectedColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(3);
   const [zoom, setZoom] = useState(100);
+  
+  // Current user for collaboration
+  const currentUser = {
+    id: "current-user",
+    name: "You",
+    avatar: "",
+    email: "you@example.com",
+    role: "editor",
+    isOnline: true,
+    cursor: { x: 0, y: 0, color: "#6366f1" }
+  };
   
   const collaborators = [
     { 
@@ -57,6 +69,86 @@ const TeamWhiteboard = () => {
       isActive: true 
     }
   ];
+
+  // Enhanced keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Multi-selection with Ctrl/Cmd
+      if ((e.ctrlKey || e.metaKey) && fabricCanvas) {
+        if (e.key === 'a') {
+          e.preventDefault();
+          const allObjects = fabricCanvas.getObjects();
+          if (allObjects.length > 0) {
+            fabricCanvas.discardActiveObject();
+            const selection = new ActiveSelection(allObjects, {
+              canvas: fabricCanvas,
+            });
+            fabricCanvas.setActiveObject(selection);
+            fabricCanvas.requestRenderAll();
+            toast.success("All objects selected");
+          }
+        } else if (e.key === 'd') {
+          e.preventDefault();
+          const activeObjects = fabricCanvas.getActiveObjects();
+          if (activeObjects.length > 0) {
+            activeObjects.forEach(obj => {
+              const cloned = util.object.clone(obj);
+              cloned.set({
+                left: obj.left + 20,
+                top: obj.top + 20,
+              });
+              fabricCanvas.add(cloned);
+            });
+            fabricCanvas.requestRenderAll();
+            toast.success("Objects duplicated");
+          }
+        } else if (e.key === 'g') {
+          e.preventDefault();
+          const activeObjects = fabricCanvas.getActiveObjects();
+          if (activeObjects.length > 1) {
+            const group = new Group(activeObjects, {
+              canvas: fabricCanvas,
+            });
+            fabricCanvas.remove(...activeObjects);
+            fabricCanvas.add(group);
+            fabricCanvas.setActiveObject(group);
+            fabricCanvas.requestRenderAll();
+            toast.success("Objects grouped");
+          }
+        }
+      }
+
+      // Delete selected objects
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeObjects = fabricCanvas?.getActiveObjects();
+        if (activeObjects && activeObjects.length > 0) {
+          activeObjects.forEach(obj => fabricCanvas.remove(obj));
+          fabricCanvas.discardActiveObject();
+          fabricCanvas.requestRenderAll();
+          toast.success("Objects deleted");
+        }
+      }
+
+      // Tool shortcuts
+      const toolShortcuts = {
+        '1': 'select',
+        '2': 'hand', 
+        '3': 'rectangle',
+        '4': 'circle',
+        '5': 'arrow',
+        '6': 'line',
+        '7': 'pen',
+        '8': 'text'
+      };
+
+      if (toolShortcuts[e.key]) {
+        setSelectedTool(toolShortcuts[e.key]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fabricCanvas]);
 
   // Simulate collaborative cursor movement
   useEffect(() => {
@@ -148,11 +240,12 @@ const TeamWhiteboard = () => {
         />
       </div>
 
-      {/* Top Right Controls (Share & Library like Excalidraw) */}
+      {/* Top Right Controls (Enhanced Collaboration) */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <Button variant="default" className="shadow-md">
-          Share
-        </Button>
+        <CollaborationPanel 
+          roomId={id || "demo"}
+          currentUser={currentUser}
+        />
         <Button variant="outline" className="shadow-md">
           Library
         </Button>

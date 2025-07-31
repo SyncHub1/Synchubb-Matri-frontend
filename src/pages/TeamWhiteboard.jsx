@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Canvas as FabricCanvas } from "fabric";
-import { Menu } from "lucide-react";
+import { Canvas as FabricCanvas, FabricImage } from "fabric";
 import { Button } from "@/components/ui/button";
 import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
@@ -9,6 +8,8 @@ import { ColorPicker } from "@/components/whiteboard/ColorPicker";
 import { StrokeControls } from "@/components/whiteboard/StrokeControls";
 import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
+import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
+import { toast } from "sonner";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -69,13 +70,74 @@ const TeamWhiteboard = () => {
     setFabricCanvas(canvas);
   };
 
+  const handleExportImage = () => {
+    if (!fabricCanvas) return;
+    
+    const dataURL = fabricCanvas.toDataURL({
+      format: 'png',
+      quality: 1,
+      multiplier: 2
+    });
+    
+    const link = document.createElement('a');
+    link.download = `whiteboard-export-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = dataURL;
+    link.click();
+    
+    toast.success("Image exported successfully!");
+  };
+
+  const handleClearCanvas = () => {
+    if (!fabricCanvas) return;
+    
+    fabricCanvas.clear();
+    fabricCanvas.backgroundColor = "#ffffff";
+    fabricCanvas.renderAll();
+    toast.success("Canvas cleared!");
+  };
+
+  const handleImageUpload = (file) => {
+    if (!fabricCanvas) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imgElement = new Image();
+      imgElement.onload = () => {
+        FabricImage.fromURL(event.target.result).then((img) => {
+          const canvasWidth = fabricCanvas.getWidth();
+          const canvasHeight = fabricCanvas.getHeight();
+          const maxWidth = canvasWidth * 0.3;
+          const maxHeight = canvasHeight * 0.3;
+          
+          const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+          
+          img.set({
+            left: canvasWidth / 2 - (img.width * scale) / 2,
+            top: canvasHeight / 2 - (img.height * scale) / 2,
+            scaleX: scale,
+            scaleY: scale,
+          });
+          
+          fabricCanvas.add(img);
+          fabricCanvas.setActiveObject(img);
+          fabricCanvas.renderAll();
+        });
+      };
+      imgElement.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Menu Button - Top Left (Excalidraw style) */}
       <div className="fixed top-4 left-4 z-50">
-        <Button variant="outline" size="icon" className="shadow-md">
-          <Menu className="h-4 w-4" />
-        </Button>
+        <WhiteboardMenu 
+          onExportImage={handleExportImage}
+          onClearCanvas={handleClearCanvas}
+          onImageUpload={handleImageUpload}
+          fabricCanvas={fabricCanvas}
+        />
       </div>
 
       {/* Main Toolbar - Top Center (Excalidraw style) */}
@@ -153,6 +215,7 @@ const TeamWhiteboard = () => {
           brushSize={brushSize}
           zoom={zoom}
           onCanvasReady={handleCanvasReady}
+          onImageUpload={handleImageUpload}
         />
         
         {/* Collaborative Cursors */}

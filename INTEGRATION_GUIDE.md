@@ -3,39 +3,107 @@
 ## Overview
 This guide helps you integrate the Maitri collaboration platform into your existing website at `https://www.synchubb.in/dashboard/maitri`.
 
+The entire Maitri platform is self-contained in the `MaitriCollaboration` component, making integration straightforward.
+
+## Quick Start
+
+1. **Copy all files** listed below to your main website
+2. **Install dependencies** from the list below
+3. **Add the route** in your main router
+4. **Import styles** and you're done!
+
 ## Files to Copy
 
-### 1. Main Component
-- `src/components/MaitriCollaboration.tsx` - The main entry point
+### 📁 Main Component
+```
+src/components/MaitriCollaboration.tsx
+```
 
-### 2. Pages (copy entire src/pages folder)
-- `src/pages/TeamDiscovery.tsx`
-- `src/pages/TeamChat.tsx`
-- `src/pages/TeamIDE.tsx`
-- `src/pages/TeamVideo.tsx`
-- `src/pages/TeamTasks.jsx`
-- `src/pages/TeamWhiteboard.jsx`
-- `src/pages/TeamAnalytics.tsx`
-- `src/pages/CreateTeam.tsx`
+### 📁 Pages Directory (copy entire folder)
+```
+src/pages/
+├── TeamDiscovery.tsx
+├── TeamChat.tsx
+├── TeamIDE.tsx
+├── TeamVideo.tsx
+├── TeamTasks.jsx
+├── TeamWhiteboard.jsx
+├── TeamAnalytics.tsx
+├── CreateTeam.tsx
+├── Index.tsx
+└── NotFound.tsx
+```
 
-### 3. UI Components (copy entire src/components/ui folder)
-All shadcn/ui components in `src/components/ui/`
+### 📁 UI Components (copy entire folder)
+```
+src/components/ui/
+├── accordion.tsx
+├── alert-dialog.tsx
+├── alert.tsx
+├── avatar.tsx
+├── badge.tsx
+├── breadcrumb.tsx
+├── button.tsx
+├── calendar.tsx
+├── card.tsx
+├── checkbox.tsx
+├── dialog.tsx
+├── dropdown-menu.tsx
+├── form.tsx
+├── input.tsx
+├── label.tsx
+├── popover.tsx
+├── select.tsx
+├── separator.tsx
+├── slider.tsx
+├── switch.tsx
+├── tabs.tsx
+├── textarea.tsx
+├── toast.tsx
+├── toaster.tsx
+├── tooltip.tsx
+└── ... (all other UI components)
+```
 
-### 4. Utility Components
-- `src/components/FloatingActionButton.jsx`
-- `src/components/KeyboardShortcuts.jsx`
-- `src/components/MobileNavigation.tsx`
-- `src/components/QuickActions.jsx`
-- `src/components/StatusIndicator.jsx`
+### 📁 Whiteboard Components
+```
+src/components/whiteboard/
+├── WhiteboardCanvas.tsx
+├── Toolbar.tsx
+├── ColorPicker.tsx
+├── StrokeControls.tsx
+├── CanvasControls.tsx
+├── CollaborationPanel.tsx
+├── CollaboratorCursors.tsx
+├── ThemeToggle.tsx
+└── WhiteboardMenu.tsx
+```
 
-### 5. Styles
-- `src/index.css` - Contains all the design system tokens
-- `tailwind.config.ts` - Tailwind configuration
+### 📁 Utility Components
+```
+src/components/
+├── FloatingActionButton.jsx
+├── KeyboardShortcuts.jsx
+├── MobileNavigation.tsx
+├── QuickActions.jsx
+└── StatusIndicator.jsx
+```
 
-### 6. Utilities
-- `src/lib/utils.ts`
-- `src/hooks/use-mobile.tsx`
-- `src/hooks/use-toast.ts`
+### 📁 Hooks & Utilities
+```
+src/hooks/
+├── use-mobile.tsx
+└── use-toast.ts
+
+src/lib/
+└── utils.ts
+```
+
+### 📁 Styles & Configuration
+```
+src/index.css
+tailwind.config.ts
+```
 
 ## Required Dependencies
 
@@ -112,17 +180,67 @@ Copy all the files listed in the "Files to Copy" section to your project.
 In your main website, update the route for `/dashboard/maitri` to render the MaitriCollaboration component:
 
 ```tsx
-import MaitriCollaboration from './path/to/MaitriCollaboration';
+import MaitriCollaboration from './path/to/components/MaitriCollaboration';
 
-// In your router
-<Route path="/dashboard/maitri/*" element={<MaitriCollaboration />} />
+// In your main router (App.tsx or wherever your routes are defined)
+<Routes>
+  {/* Your existing routes */}
+  <Route path="/dashboard/maitri/*" element={<MaitriCollaboration />} />
+</Routes>
 ```
 
 ### Step 4: Update Tailwind Config
-Make sure your tailwind.config.js includes the paths to the new components and uses the configuration from this project.
+Merge the tailwind.config.ts from this project with your existing config:
+
+```typescript
+// In your tailwind.config.js/ts
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    // Add paths to Maitri components
+    "./src/components/**/*.{js,ts,jsx,tsx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      // Copy the theme extensions from the provided tailwind.config.ts
+      colors: {
+        // Add all color definitions from the project
+      },
+      // Add other theme extensions
+    },
+  },
+  plugins: [
+    // Include all plugins from the project
+  ],
+}
+```
 
 ### Step 5: Import Styles
-Make sure to import the index.css file in your main application.
+Import the index.css in your main application entry point:
+
+```tsx
+// In your main.tsx or index.tsx
+import './index.css'; // Make sure this includes all Maitri styles
+```
+
+### Step 6: Environment Setup (Optional)
+If you want to use Supabase features, make sure to set up your environment variables:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Testing the Integration
+
+After completing the integration:
+
+1. **Verify routing**: Navigate to `https://www.synchubb.in/dashboard/maitri` 
+2. **Check console**: Ensure no missing dependency errors
+3. **Test functionality**: Try creating a team and accessing different modules
+4. **Responsive design**: Test on different screen sizes
 
 ## Usage
 
@@ -136,14 +254,59 @@ Once integrated, users can access the Maitri collaboration platform at:
 - `https://www.synchubb.in/dashboard/maitri/teams/{id}/whiteboard` - Collaborative whiteboard
 - `https://www.synchubb.in/dashboard/maitri/teams/{id}/analytics` - Team analytics
 
-## Notes
+## Key Features
 
-- The component is self-contained and includes its own routing
-- All state management is handled internally
-- The design system is fully customizable through the CSS variables in index.css
-- The component supports dark mode out of the box
-- All features are responsive and mobile-friendly
+✅ **Self-contained**: No external dependencies on your existing code  
+✅ **Responsive**: Works perfectly on desktop, tablet, and mobile  
+✅ **Dark mode**: Built-in theme switching  
+✅ **Real-time collaboration**: Chat, whiteboard, and more  
+✅ **Modern UI**: Beautiful design with smooth animations  
+✅ **TypeScript**: Full type safety  
+
+## Troubleshooting
+
+### Common Issues
+
+**1. Style conflicts**: If styles look off, ensure index.css is imported properly
+**2. Route not working**: Make sure the route path ends with `/*` for nested routing  
+**3. Missing icons**: Verify lucide-react is installed and imported correctly  
+**4. Build errors**: Check that all dependencies are installed with correct versions  
+
+### Quick Fixes
+
+```bash
+# Clear cache and reinstall
+npm run build --clear-cache
+npm install
+
+# Verify all dependencies
+npm list --depth=0
+```
+
+## Advanced Configuration
+
+### Custom Styling
+Modify variables in `index.css` to match your brand:
+
+```css
+:root {
+  --primary: 220 90% 56%; /* Your brand color */
+  --secondary: 220 14.3% 95.9%;
+  /* ... other variables */
+}
+```
+
+### Environment Variables
+```env
+# Optional Supabase configuration
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
 ## Support
 
 If you need any modifications or have questions about the integration, please let me know!
+
+---
+
+**🚀 Ready to integrate? Just copy-paste the files and follow the 6 simple steps above!**

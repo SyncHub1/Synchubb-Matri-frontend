@@ -58,7 +58,7 @@ const TeamChat = () => {
       isOwn: false
     }
   ]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef(null);
 
   const teamMembers = [
     { name: "Alex", avatar: "A", status: "online" },

@@ -51,7 +51,7 @@ const CreateTeam = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     // Simulate team creation
     toast.success("Team created successfully!");

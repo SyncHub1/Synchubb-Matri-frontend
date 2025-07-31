@@ -75,7 +75,7 @@ const TeamChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 

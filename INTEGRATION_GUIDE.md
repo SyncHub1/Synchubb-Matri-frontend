@@ -1,9 +1,7 @@
-# Maitri Collaboration Platform Integration Guide (JavaScript Version)
+# Maitri Collaboration Platform Integration Guide
 
 ## Overview
-This guide helps you integrate the Maitri collaboration platform into your existing **JavaScript** website at `https://www.synchubb.in/dashboard/maitri`.
-
-**✅ Converted to JavaScript**: All TypeScript files have been converted to JavaScript (.jsx/.js) for seamless integration into your JavaScript project.
+This guide helps you integrate the Maitri collaboration platform into your existing website at `https://www.synchubb.in/dashboard/maitri`.
 
 The entire Maitri platform is self-contained in the `MaitriCollaboration` component, making integration straightforward.
 
@@ -18,67 +16,67 @@ The entire Maitri platform is self-contained in the `MaitriCollaboration` compon
 
 ### 📁 Main Component
 ```
-src/components/MaitriCollaboration.jsx
+src/components/MaitriCollaboration.tsx
 ```
 
 ### 📁 Pages Directory (copy entire folder)
 ```
 src/pages/
-├── TeamDiscovery.jsx
-├── TeamChat.jsx
-├── TeamIDE.jsx
-├── TeamVideo.jsx
+├── TeamDiscovery.tsx
+├── TeamChat.tsx
+├── TeamIDE.tsx
+├── TeamVideo.tsx
 ├── TeamTasks.jsx
 ├── TeamWhiteboard.jsx
-├── TeamAnalytics.jsx
-├── CreateTeam.jsx
-├── Index.jsx
-└── NotFound.jsx
+├── TeamAnalytics.tsx
+├── CreateTeam.tsx
+├── Index.tsx
+└── NotFound.tsx
 ```
 
 ### 📁 UI Components (copy entire folder)
 ```
 src/components/ui/
-├── accordion.jsx
-├── alert-dialog.jsx
-├── alert.jsx
-├── avatar.jsx
-├── badge.jsx
-├── breadcrumb.jsx
-├── button.jsx
-├── calendar.jsx
-├── card.jsx
-├── checkbox.jsx
-├── dialog.jsx
-├── dropdown-menu.jsx
-├── form.jsx
-├── input.jsx
-├── label.jsx
-├── popover.jsx
-├── select.jsx
-├── separator.jsx
-├── slider.jsx
-├── switch.jsx
-├── tabs.jsx
-├── textarea.jsx
-├── toast.jsx
-├── toaster.jsx
-├── tooltip.jsx
+├── accordion.tsx
+├── alert-dialog.tsx
+├── alert.tsx
+├── avatar.tsx
+├── badge.tsx
+├── breadcrumb.tsx
+├── button.tsx
+├── calendar.tsx
+├── card.tsx
+├── checkbox.tsx
+├── dialog.tsx
+├── dropdown-menu.tsx
+├── form.tsx
+├── input.tsx
+├── label.tsx
+├── popover.tsx
+├── select.tsx
+├── separator.tsx
+├── slider.tsx
+├── switch.tsx
+├── tabs.tsx
+├── textarea.tsx
+├── toast.tsx
+├── toaster.tsx
+├── tooltip.tsx
 └── ... (all other UI components)
 ```
 
 ### 📁 Whiteboard Components
 ```
 src/components/whiteboard/
-├── WhiteboardCanvas.jsx
-├── Toolbar.jsx
-├── ColorPicker.jsx
-├── StrokeControls.jsx
-├── CanvasControls.jsx
-├── CollaborationPanel.jsx
-├── CollaboratorCursors.jsx
-├── ThemeToggle.jsx
-└── WhiteboardMenu.jsx
+├── WhiteboardCanvas.tsx
+├── Toolbar.tsx
+├── ColorPicker.tsx
+├── StrokeControls.tsx
+├── CanvasControls.tsx
+├── CollaborationPanel.tsx
+├── CollaboratorCursors.tsx
+├── ThemeToggle.tsx
+└── WhiteboardMenu.tsx
 ```
 
 ### 📁 Utility Components
@@ -86,7 +84,7 @@ src/components/whiteboard/
 src/components/
 ├── FloatingActionButton.jsx
 ├── KeyboardShortcuts.jsx
-├── MobileNavigation.jsx
+├── MobileNavigation.tsx
 ├── QuickActions.jsx
 └── StatusIndicator.jsx
 ```
@@ -94,11 +92,11 @@ src/components/
 ### 📁 Hooks & Utilities
 ```
 src/hooks/
-├── use-mobile.jsx
-└── use-toast.js
+├── use-mobile.tsx
+└── use-toast.ts
 
 src/lib/
-└── utils.js
+└── utils.ts
 ```
 
 ### 📁 Styles & Configuration
@@ -181,10 +179,10 @@ Copy all the files listed in the "Files to Copy" section to your project.
 ### Step 3: Update Your Routing
 In your main website, update the route for `/dashboard/maitri` to render the MaitriCollaboration component:
 
-```jsx
+```tsx
 import MaitriCollaboration from './path/to/components/MaitriCollaboration';
 
-// In your main router (App.jsx or wherever your routes are defined)
+// In your main router (App.tsx or wherever your routes are defined)
 <Routes>
   {/* Your existing routes */}
   <Route path="/dashboard/maitri/*" element={<MaitriCollaboration />} />
@@ -192,21 +190,21 @@ import MaitriCollaboration from './path/to/components/MaitriCollaboration';
 ```
 
 ### Step 4: Update Tailwind Config
-Merge the tailwind.config.js from this project with your existing config:
+Merge the tailwind.config.ts from this project with your existing config:
 
-```javascript
-// In your tailwind.config.js
+```typescript
+// In your tailwind.config.js/ts
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",
     // Add paths to Maitri components
-    "./src/components/**/*.{js,jsx}",
-    "./src/pages/**/*.{js,jsx}",
+    "./src/components/**/*.{js,ts,jsx,tsx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      // Copy the theme extensions from the provided tailwind.config.js
+      // Copy the theme extensions from the provided tailwind.config.ts
       colors: {
         // Add all color definitions from the project
       },
@@ -222,8 +220,8 @@ export default {
 ### Step 5: Import Styles
 Import the index.css in your main application entry point:
 
-```jsx
-// In your main.jsx or index.jsx
+```tsx
+// In your main.tsx or index.tsx
 import './index.css'; // Make sure this includes all Maitri styles
 ```
 
@@ -263,7 +261,7 @@ Once integrated, users can access the Maitri collaboration platform at:
 ✅ **Dark mode**: Built-in theme switching  
 ✅ **Real-time collaboration**: Chat, whiteboard, and more  
 ✅ **Modern UI**: Beautiful design with smooth animations  
-✅ **JavaScript Ready**: Converted from TypeScript for easy integration
+✅ **TypeScript**: Full type safety  
 
 ## Troubleshooting
 

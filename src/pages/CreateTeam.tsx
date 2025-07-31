@@ -19,7 +19,7 @@ const CreateTeam = () => {
     visibility: "public",
     maxMembers: 5,
     location: "",
-    skills: [],
+    skills: [] as string[],
   });
   const [skillInput, setSkillInput] = useState("");
 
@@ -44,14 +44,14 @@ const CreateTeam = () => {
     }
   };
 
-  const removeSkill = (skill) => {
+  const removeSkill = (skill: string) => {
     setTeamData({
       ...teamData,
       skills: teamData.skills.filter(s => s !== skill)
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulate team creation
     toast.success("Team created successfully!");

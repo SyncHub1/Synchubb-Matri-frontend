@@ -58,7 +58,7 @@ const TeamChat = () => {
       isOwn: false
     }
   ]);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const teamMembers = [
     { name: "Alex", avatar: "A", status: "online" },
@@ -75,7 +75,7 @@ const TeamChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = (e) => {
+  const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 

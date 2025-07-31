@@ -118,7 +118,7 @@ export default EcoTracker;`);
     }
   }, [activeFile]);
 
-  const renderFileTree = (files: any[], level = 0) => {
+  const renderFileTree = (files, level = 0) => {
     return files.map((file, index) => (
       <div key={index} style={{ marginLeft: level * 16 }}>
         <div className={`flex items-center gap-2 p-1 hover:bg-nav-hover rounded cursor-pointer ${

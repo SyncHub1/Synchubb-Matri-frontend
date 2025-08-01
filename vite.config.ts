@@ -8,7 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    headers: {
+      'Access-Control-Allow-Origin': 'https://www.synchubb.in', 
+      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type, Authorization',
+    },
   },
+  
   plugins: [
     react(),
     mode === 'development' &&

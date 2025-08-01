@@ -187,92 +187,94 @@ export const WhiteboardMenu = ({
           </div>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 p-0">
-        <div className="h-full bg-background border-r">
-          <SheetHeader className="p-4 pb-2">
+      <SheetContent side="left" className="w-80 p-0 max-h-screen">
+        <div className="h-full bg-background border-r flex flex-col">
+          <SheetHeader className="p-4 pb-2 flex-shrink-0">
             <SheetTitle className="text-left">Whiteboard Menu</SheetTitle>
             <SheetDescription className="text-left">
               Access tools and settings for your collaborative whiteboard
             </SheetDescription>
           </SheetHeader>
           
-          <div className="px-4 space-y-1">
-            {menuItems.map((item, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                className="w-full justify-start gap-3 h-10"
-                onClick={item.action}
-              >
-                <item.icon className="h-4 w-4" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.shortcut && (
-                  <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                    {item.shortcut}
-                  </kbd>
-                )}
-              </Button>
-            ))}
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="px-4 space-y-1">
-            {bottomMenuItems.map((item, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                className="w-full justify-start gap-3 h-10"
-                onClick={item.action}
-              >
-                <item.icon className="h-4 w-4" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.shortcut && (
-                  <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                    {item.shortcut}
-                  </kbd>
-                )}
-              </Button>
-            ))}
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="px-4">
-            <h4 className="text-sm font-medium mb-2">Theme</h4>
-            <div className="flex gap-1">
-              {themeOptions.map((option) => (
+          <div className="flex-1 overflow-y-auto whiteboard-menu-scroll">
+            <div className="px-4 space-y-1 whiteboard-menu-content">
+              {menuItems.map((item, index) => (
                 <Button
-                  key={option.value}
-                  variant={theme === option.value ? "default" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setTheme(option.value)}
-                  title={option.label}
+                  key={index}
+                  variant="ghost"
+                  className="w-full justify-start gap-3 h-10"
+                  onClick={item.action}
                 >
-                  <option.icon className="h-4 w-4" />
+                  <item.icon className="h-4 w-4" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.shortcut && (
+                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                      {item.shortcut}
+                    </kbd>
+                  )}
                 </Button>
               ))}
             </div>
-          </div>
 
-          <Separator className="my-4" />
+            <Separator className="my-4" />
 
-          <div className="px-4">
-            <h4 className="text-sm font-medium mb-2">Upload Image</h4>
-            <label htmlFor="image-upload">
-              <Button variant="outline" className="w-full gap-2 cursor-pointer">
-                <Upload className="h-4 w-4" />
-                Choose Image File
-              </Button>
-            </label>
-            <input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <div className="px-4 space-y-1">
+              {bottomMenuItems.map((item, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className="w-full justify-start gap-3 h-10"
+                  onClick={item.action}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.shortcut && (
+                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                      {item.shortcut}
+                    </kbd>
+                  )}
+                </Button>
+              ))}
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="px-4">
+              <h4 className="text-sm font-medium mb-2">Theme</h4>
+              <div className="flex gap-1">
+                {themeOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={theme === option.value ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setTheme(option.value)}
+                    title={option.label}
+                  >
+                    <option.icon className="h-4 w-4" />
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="px-4 pb-8">
+              <h4 className="text-sm font-medium mb-2">Upload Image</h4>
+              <label htmlFor="image-upload">
+                <Button variant="outline" className="w-full gap-2 cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                  Choose Image File
+                </Button>
+              </label>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </div>
           </div>
         </div>
       </SheetContent>

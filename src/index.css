@@ -151,6 +151,29 @@
 
   /* Custom focus styles */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Whiteboard Menu Scrollbar Styles */
+  .whiteboard-menu-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .whiteboard-menu-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .whiteboard-menu-scroll::-webkit-scrollbar-thumb {
+    background: hsl(220 15% 20%);
+    border-radius: 3px;
+  }
+
+  .whiteboard-menu-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(220 15% 25%);
+  }
+
+  /* Ensure bottom content is visible */
+  .whiteboard-menu-content {
+    padding-bottom: 2rem;
   }
 }

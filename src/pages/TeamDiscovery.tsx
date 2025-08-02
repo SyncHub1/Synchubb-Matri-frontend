@@ -161,8 +161,8 @@ const TeamDiscovery = () => {
   // Filter teams based on search and category
   useEffect(() => {
     const filtered = teams.filter(team => {
-      const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           team.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         team.description.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesCategory = selectedCategory === "all" || (() => {
         // Normalize team category to match category ID
@@ -176,8 +176,8 @@ const TeamDiscovery = () => {
         return teamCategoryNormalized === selectedCategory;
       })();
       
-      return matchesSearch && matchesCategory;
-    });
+    return matchesSearch && matchesCategory;
+  });
     setFilteredTeams(filtered);
   }, [teams, searchQuery, selectedCategory]);
 
@@ -241,7 +241,7 @@ const TeamDiscovery = () => {
               Team Discovery
             </h1>
           </div>
-
+          
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button variant="purple" size="sm" className="flex-1 sm:flex-none" asChild>
               <Link to="/dashboard/maitri/teams/create">
@@ -270,27 +270,27 @@ const TeamDiscovery = () => {
             <Button variant="outline" size="icon" className="h-10 w-10 sm:h-11 sm:w-11">
               <Filter className="h-4 w-4" />
             </Button>
-          </div>
+            </div>
 
           {/* Category Filter */}
           <div className="flex flex-wrap gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-0">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => setSelectedCategory(category.id)}
                 className="text-xs whitespace-nowrap flex-shrink-0"
               >
                 <span className="hidden sm:inline">{category.label}</span>
                 <span className="sm:hidden">{category.label.split(' ')[0]}</span>
                 <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
-                  {category.count}
-                </Badge>
-              </Button>
-            ))}
+                      {category.count}
+                    </Badge>
+                </Button>
+              ))}
           </div>
-        </div>
+            </div>
 
         {/* Teams Grid */}
         {filteredTeams.length === 0 ? (
@@ -306,17 +306,17 @@ const TeamDiscovery = () => {
             {!searchQuery && selectedCategory === "all" && (
               <Button variant="purple" asChild>
                 <Link to="/dashboard/maitri/teams/create">
-                  <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                   Create First Team
-                </Link>
-              </Button>
+                  </Link>
+                </Button>
             )}
-          </div>
+                </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredTeams.map((team) => (
-              <Card key={team.id} className="bg-team-card hover:bg-team-card-hover transition-all duration-200 shadow-card hover:shadow-glow">
-                <CardContent className="p-4 sm:p-6">
+              {filteredTeams.map((team) => (
+                <Card key={team.id} className="bg-team-card hover:bg-team-card-hover transition-all duration-200 shadow-card hover:shadow-glow">
+                  <CardContent className="p-4 sm:p-6">
                   {/* Team Header */}
                   <div className="flex items-start justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -367,9 +367,9 @@ const TeamDiscovery = () => {
                     {team.category && (
                       <Badge variant="outline" className="text-xs">
                         {team.category}
-                      </Badge>
-                    )}
-                  </div>
+                        </Badge>
+                      )}
+                    </div>
 
                   {/* Skills */}
                   {team.skills && team.skills.length > 0 && (
@@ -410,7 +410,7 @@ const TeamDiscovery = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                      <div className="flex gap-2">
                     <Button 
                       variant="default" 
                       size="sm" 
@@ -419,13 +419,13 @@ const TeamDiscovery = () => {
                     >
                       <span className="hidden sm:inline">Join & Enter</span>
                       <span className="sm:hidden">Join</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              </div>
+            )}
       </div>
     </div>
   );

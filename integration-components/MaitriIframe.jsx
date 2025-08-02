@@ -25,53 +25,20 @@ const MaitriIframe = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Environment-based Maitri service URL
-  const getMaitriUrl = () => {
-    const isProduction = window.location.hostname === 'www.synchubb.in' || 
-                        window.location.hostname === 'synchubb.in' ||
-                        window.location.protocol === 'https:' ||
-                        import.meta.env.PROD;
-    
-    if (isProduction) {
-      return import.meta.env.VITE_MAITRI_URL || 'https://maitri.synchubb.in';
-    } else {
-      return import.meta.env.VITE_MAITRI_URL || 'http://localhost:5173';
-    }
-  };
-
-  const MAITRI_URL = getMaitriUrl();
-
-  console.log('MaitriIframe - Environment detection:', {
-    hostname: window.location.hostname,
-    protocol: window.location.protocol,
-    maitriUrl: MAITRI_URL,
-    env: import.meta.env.MODE
-  });
+  // Get Maitri service URL from environment
+  const MAITRI_URL = process.env.REACT_APP_MAITRI_URL || 'http://localhost:5173';
 
   useEffect(() => {
     // Check if Maitri service is available
     const checkMaitriHealth = async () => {
       try {
-        console.log('Checking Maitri health at:', MAITRI_URL);
-        const response = await fetch(`${MAITRI_URL}/health`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          // Don't include credentials for health check
-          credentials: 'omit'
-        });
-        
+        const response = await fetch(`${MAITRI_URL}/health`);
         if (!response.ok) {
-          throw new Error(`Maitri service health check failed: ${response.status}`);
+          throw new Error('Maitri service is not available');
         }
-        
-        console.log('Maitri health check successful');
         setIsLoading(false);
       } catch (err) {
-        console.error('Maitri health check failed:', err);
-        // Don't show error for health check failures, just skip the check
+        setError('Failed to connect to Maitri service');
         setIsLoading(false);
       }
     };

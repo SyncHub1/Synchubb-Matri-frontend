@@ -187,7 +187,7 @@ const CreateTeam = () => {
         await sendEmailInvitations();
       }
       
-      toast.success("Team created successfully!");
+    toast.success("Team created successfully!");
       console.log("Team created:", (response as any).data);
       
       // Navigate to teams page with refresh parameter
@@ -578,7 +578,7 @@ const CreateTeam = () => {
                 </>
               ) : (
                 <>
-                  <Users className="h-4 w-4 mr-2" />
+              <Users className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Create Team</span>
                   <span className="sm:hidden">Create</span>
                 </>

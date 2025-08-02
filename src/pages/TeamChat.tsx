@@ -30,7 +30,7 @@ const TeamChat = () => {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const { user } = useAuthContext();
   const { messages, isConnected, sendMessage, deleteMessage, onlineUsers } = useWebSocket(id);
   const [team, setTeam] = useState<any>(null);
@@ -178,49 +178,49 @@ const TeamChat = () => {
               </div>
             </div>
 
-            {/* Team Tools */}
+          {/* Team Tools */}
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">TEAM TOOLS</h4>
               <div className="space-y-1">
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link to={`/dashboard/maitri/teams/${id}/ide`}>
                     <Code className="h-4 w-4 mr-2" />
-                    Code Editor
-                  </Link>
-                </Button>
+                  Code Editor
+                </Link>
+              </Button>
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link to={`/dashboard/maitri/teams/${id}/video`}>
                     <Video className="h-4 w-4 mr-2" />
-                    Video Call
-                  </Link>
-                </Button>
+                  Video Call
+                </Link>
+              </Button>
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link to={`/dashboard/maitri/teams/${id}/tasks`}>
                     <Calendar className="h-4 w-4 mr-2" />
-                    Tasks
-                  </Link>
-                </Button>
+                  Tasks
+                </Link>
+              </Button>
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link to={`/dashboard/maitri/teams/${id}/whiteboard`}>
                     <PaintBucket className="h-4 w-4 mr-2" />
-                    Whiteboard
-                  </Link>
-                </Button>
+                  Whiteboard
+                </Link>
+              </Button>
                 <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                   <Link to={`/dashboard/maitri/teams/${id}/analytics`}>
                     <Users className="h-4 w-4 mr-2" />
-                    Analytics
-                  </Link>
-                </Button>
+                  Analytics
+                </Link>
+              </Button>
               </div>
-            </div>
+          </div>
 
-            {/* Team Members */}
+          {/* Team Members */}
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 TEAM MEMBERS ({team?.members?.length || 0})
               </h4>
-              <div className="space-y-2">
+            <div className="space-y-2">
                 {team?.members?.map((member: any, index: number) => (
                   <div key={member.id || index} className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
                     <Avatar className="h-8 w-8">
@@ -240,10 +240,10 @@ const TeamChat = () => {
                     No members yet
                   </div>
                 )}
-              </div>
             </div>
+          </div>
 
-            {/* Quick Actions */}
+          {/* Quick Actions */}
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">QUICK ACTIONS</h4>
               <Button variant="default" size="sm" className="w-full" asChild>
@@ -256,7 +256,7 @@ const TeamChat = () => {
           </div>
         </div>
 
-        {/* Messages */}
+          {/* Messages */}
         <div className="flex-1 flex flex-col">
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
@@ -276,7 +276,7 @@ const TeamChat = () => {
                   {msg.senderId !== user?.id && (
                     <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
                       <AvatarFallback className="text-xs sm:text-sm">{msg.senderAvatar}</AvatarFallback>
-                    </Avatar>
+                </Avatar>
                   )}
                   
                   <div className={`max-w-[75%] sm:max-w-[70%] ${msg.senderId === user?.id ? 'order-first' : ''}`}>
@@ -359,7 +359,7 @@ const TeamChat = () => {
                 onClick={() => document.getElementById('file-upload')?.click()}
               >
                 <Paperclip className="h-4 w-4" />
-              </Button>
+                </Button>
               
               <Button 
                 type="submit" 

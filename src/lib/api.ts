@@ -1,112 +1,45 @@
 import axios from 'axios';
 
-// Environment-based API Base URLs
-const getApiBaseUrls = () => {
-  // More robust production detection
-  const isProduction = window.location.hostname === 'www.synchubb.in' || 
-                      window.location.hostname === 'synchubb.in' ||
-                      window.location.protocol === 'https:' ||
-                      import.meta.env.PROD;
-  
-  console.log('Environment detection:', {
-    hostname: window.location.hostname,
-    protocol: window.location.protocol,
-    isProduction,
-    env: import.meta.env.MODE
-  });
-  
-  if (isProduction) {
-    const productionUrls = {
-      auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'https://api.synchubb.in',
-      media: import.meta.env.VITE_MEDIA_API_URL || 'https://media.synchubb.in',
-      websocket: import.meta.env.VITE_WEBSOCKET_URL || 'wss://ws.synchubb.in',
-      shared: import.meta.env.VITE_SHARED_UTILS_URL || 'https://utils.synchubb.in'
-    };
-    
-    console.log('Using production URLs:', productionUrls);
-    return productionUrls;
-  } else {
-    const developmentUrls = {
-      auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:8000',
-      media: import.meta.env.VITE_MEDIA_API_URL || 'http://localhost:3001',
-      websocket: import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3002',
-      shared: import.meta.env.VITE_SHARED_UTILS_URL || 'http://localhost:3004'
-    };
-    
-    console.log('Using development URLs:', developmentUrls);
-    return developmentUrls;
-  }
+// API Base URLs for different microservices
+const API_BASE_URLS = {
+  auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:8000',
+  media: import.meta.env.VITE_MEDIA_API_URL || 'http://localhost:3001',
+  websocket: import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3002',
+  shared: import.meta.env.VITE_SHARED_UTILS_URL || 'http://localhost:3004'
 };
 
-const API_BASE_URLS = getApiBaseUrls();
+// Create axios instances for each service
+const authApi = axios.create({
+  baseURL: API_BASE_URLS.auth,
+  timeout: 10000,
+  withCredentials: true
+});
 
-// Create axios instances for each service with CORS headers
-const createApiInstance = (baseURL: string, timeout: number = 10000) => {
-  console.log('Creating API instance with baseURL:', baseURL);
-  
-  const instance = axios.create({
-    baseURL,
-    timeout,
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      // CORS headers for cross-origin requests
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
-    }
-  });
-  
-  return instance;
-};
+const mediaApi = axios.create({
+  baseURL: API_BASE_URLS.media,
+  timeout: 30000, // Longer timeout for media uploads
+  withCredentials: true
+});
 
-const authApi = createApiInstance(API_BASE_URLS.auth, 10000);
-const mediaApi = createApiInstance(API_BASE_URLS.media, 30000);
-
-// Request interceptors to add auth token and handle CORS
+// Request interceptors to add auth token
 const addAuthToken = (config: any) => {
   const token = localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
-  // Add CORS headers for cross-origin requests
-  if (window.location.origin !== new URL(config.baseURL || API_BASE_URLS.auth).origin) {
-    config.headers['Access-Control-Allow-Origin'] = window.location.origin;
-    config.headers['Access-Control-Allow-Credentials'] = 'true';
-  }
-  
-  console.log('Making API request to:', config.url, 'with baseURL:', config.baseURL);
   return config;
 };
 
 authApi.interceptors.request.use(addAuthToken);
 mediaApi.interceptors.request.use(addAuthToken);
 
-// Response interceptors for error handling with CORS error handling
+// Response interceptors for error handling
 const handleResponseError = (error: any) => {
-  console.error('API Error:', error);
-  console.error('Error config:', error.config);
-  
-  // Handle CORS errors specifically
-  if (error.message?.includes('CORS') || error.code === 'ERR_NETWORK') {
-    console.error('CORS Error detected. Please check server configuration.');
-    console.error('Request URL:', error.config?.url);
-    console.error('Request baseURL:', error.config?.baseURL);
-    // You can show a user-friendly error message here
-    return Promise.reject(new Error('Network error: Unable to connect to server. Please check your connection.'));
-  }
-  
   if (error.response?.status === 401) {
     // Token expired or invalid
     localStorage.removeItem('authToken');
-    // Don't redirect in embedded mode
-    if (!import.meta.env.VITE_EMBEDDED_MODE) {
-      window.location.href = '/login';
-    }
+    window.location.href = '/login';
   }
-  
   return Promise.reject(error);
 };
 

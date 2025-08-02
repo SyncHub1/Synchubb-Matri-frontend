@@ -198,82 +198,82 @@ export const WhiteboardMenu = ({
           
           <div className="flex-1 overflow-y-auto whiteboard-menu-scroll">
             <div className="px-4 space-y-1 whiteboard-menu-content">
-              {menuItems.map((item, index) => (
+            {menuItems.map((item, index) => (
+              <Button
+                key={index}
+                variant="ghost"
+                className="w-full justify-start gap-3 h-10"
+                onClick={item.action}
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.shortcut && (
+                  <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                    {item.shortcut}
+                  </kbd>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="px-4 space-y-1">
+            {bottomMenuItems.map((item, index) => (
+              <Button
+                key={index}
+                variant="ghost"
+                className="w-full justify-start gap-3 h-10"
+                onClick={item.action}
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.shortcut && (
+                  <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                    {item.shortcut}
+                  </kbd>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="px-4">
+            <h4 className="text-sm font-medium mb-2">Theme</h4>
+            <div className="flex gap-1">
+              {themeOptions.map((option) => (
                 <Button
-                  key={index}
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-10"
-                  onClick={item.action}
+                  key={option.value}
+                  variant={theme === option.value ? "default" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setTheme(option.value)}
+                  title={option.label}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {item.shortcut && (
-                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                      {item.shortcut}
-                    </kbd>
-                  )}
+                  <option.icon className="h-4 w-4" />
                 </Button>
               ))}
             </div>
+          </div>
 
-            <Separator className="my-4" />
-
-            <div className="px-4 space-y-1">
-              {bottomMenuItems.map((item, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-10"
-                  onClick={item.action}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {item.shortcut && (
-                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                      {item.shortcut}
-                    </kbd>
-                  )}
-                </Button>
-              ))}
-            </div>
-
-            <Separator className="my-4" />
-
-            <div className="px-4">
-              <h4 className="text-sm font-medium mb-2">Theme</h4>
-              <div className="flex gap-1">
-                {themeOptions.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={theme === option.value ? "default" : "ghost"}
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setTheme(option.value)}
-                    title={option.label}
-                  >
-                    <option.icon className="h-4 w-4" />
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <Separator className="my-4" />
+          <Separator className="my-4" />
 
             <div className="px-4 pb-8">
-              <h4 className="text-sm font-medium mb-2">Upload Image</h4>
-              <label htmlFor="image-upload">
-                <Button variant="outline" className="w-full gap-2 cursor-pointer">
-                  <Upload className="h-4 w-4" />
-                  Choose Image File
-                </Button>
-              </label>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
+            <h4 className="text-sm font-medium mb-2">Upload Image</h4>
+            <label htmlFor="image-upload">
+              <Button variant="outline" className="w-full gap-2 cursor-pointer">
+                <Upload className="h-4 w-4" />
+                Choose Image File
+              </Button>
+            </label>
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
             </div>
           </div>
         </div>

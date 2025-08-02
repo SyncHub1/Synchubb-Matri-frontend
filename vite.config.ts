@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 5175, 
     headers: {
-      'Access-Control-Allow-Origin': '*', // Allow all origins in development
+      'Access-Control-Allow-Origin': ['http://localhost:5173', 'https://www.synchubb.in'],
       'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
       'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type, Authorization',
       'Access-Control-Allow-Credentials': 'true',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Canvas as FabricCanvas, FabricImage, ActiveSelection, Group, util } from "fabric";
 import { Button } from "@/components/ui/button";
 import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
 import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { toast } from "sonner";
+import { ChevronLeft, Menu, X } from "lucide-react";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -19,6 +20,7 @@ const TeamWhiteboard = () => {
   const [selectedColor, setSelectedColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(3);
   const [zoom, setZoom] = useState(100);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // Current user for collaboration
   const currentUser = {
@@ -222,8 +224,72 @@ const TeamWhiteboard = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Menu Button - Top Left (Excalidraw style) */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* Mobile Header - Top */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center gap-2">
+            <Link to={`/dashboard/maitri/teams/${id}/chat`} className="flex items-center gap-2 text-nav-foreground hover:text-nav-active">
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
+            <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center">
+              <span className="text-sm font-semibold text-primary-foreground">✕</span>
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold">Whiteboard</h1>
+              <p className="text-xs text-muted-foreground">EcoTrack Project</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileMenu(false)} />
+          <div className="absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-background border-l border-border">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-semibold">Whiteboard Tools</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 space-y-4">
+              <CollaborationPanel 
+                roomId={id || "demo"}
+                currentUser={currentUser}
+              />
+              <div className="space-y-2">
+                <Button variant="outline" className="w-full justify-start">
+                  Library
+                </Button>
+                <Button variant="outline" className="w-full justify-start" onClick={handleExportImage}>
+                  Export Image
+                </Button>
+                <Button variant="outline" className="w-full justify-start" onClick={handleClearCanvas}>
+                  Clear Canvas
+                </Button>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Button - Top Left (Desktop) */}
+      <div className="hidden lg:block fixed top-4 left-4 z-50">
         <WhiteboardMenu 
           onExportImage={handleExportImage}
           onClearCanvas={handleClearCanvas}
@@ -232,16 +298,18 @@ const TeamWhiteboard = () => {
         />
       </div>
 
-      {/* Main Toolbar - Top Center (Excalidraw style) */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-        <Toolbar 
-          selectedTool={selectedTool} 
-          onToolSelect={setSelectedTool} 
-        />
+      {/* Main Toolbar - Top Center */}
+      <div className="fixed z-50 top-16 lg:top-4 left-1/2 transform -translate-x-1/2">
+        <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-1">
+          <Toolbar 
+            selectedTool={selectedTool} 
+            onToolSelect={setSelectedTool} 
+          />
+        </div>
       </div>
 
-      {/* Top Right Controls (Enhanced Collaboration) */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      {/* Top Right Controls (Desktop) */}
+      <div className="hidden lg:flex fixed top-4 right-4 z-50 items-center gap-2">
         <CollaborationPanel 
           roomId={id || "demo"}
           currentUser={currentUser}
@@ -254,7 +322,7 @@ const TeamWhiteboard = () => {
 
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
       {selectedTool !== "select" && selectedTool !== "hand" && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-3">
+        <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
           <ColorPicker 
             selectedColor={selectedColor}
             onColorSelect={setSelectedColor}
@@ -266,13 +334,13 @@ const TeamWhiteboard = () => {
         </div>
       )}
 
-      {/* Zoom Controls - Bottom Left (Excalidraw style) */}
+      {/* Zoom Controls - Bottom Left */}
       <div className="fixed bottom-4 left-4 z-50">
-        <div className="bg-background border border-border rounded-lg shadow-lg p-2 flex items-center gap-1">
+        <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 sm:h-9 sm:w-9"
             onClick={() => setZoom(Math.max(10, zoom - 25))}
             title="Zoom Out"
           >
@@ -284,7 +352,7 @@ const TeamWhiteboard = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 sm:h-9 sm:w-9"
             onClick={() => setZoom(Math.min(500, zoom + 25))}
             title="Zoom In"
           >
@@ -293,15 +361,15 @@ const TeamWhiteboard = () => {
         </div>
       </div>
 
-      {/* Help Button - Bottom Right (Excalidraw style) */}
+      {/* Help Button - Bottom Right */}
       <div className="fixed bottom-4 right-4 z-50">
-        <Button variant="outline" size="icon" className="shadow-md rounded-full">
+        <Button variant="outline" size="icon" className="shadow-md rounded-full h-10 w-10 sm:h-11 sm:w-11">
           <span className="text-sm font-bold">?</span>
         </Button>
       </div>
 
       {/* Main Canvas */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 top-16 lg:top-0">
         <WhiteboardCanvas
           selectedTool={selectedTool}
           selectedColor={selectedColor}
@@ -315,35 +383,35 @@ const TeamWhiteboard = () => {
         <CollaboratorCursors collaborators={collaborators} />
       </div>
 
-      {/* Welcome Message - Center (Excalidraw style) */}
+      {/* Welcome Message - Center */}
       {fabricCanvas && fabricCanvas.getObjects().length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center text-muted-foreground">
-            <div className="mb-8">
-              <div className="text-6xl font-bold text-primary mb-4">✕</div>
-              <h1 className="text-2xl font-semibold mb-2">EXCALIDRAW</h1>
-              <p className="text-sm text-muted-foreground mb-8">All your data is saved locally in your browser.</p>
+        <div className="absolute inset-0 top-16 lg:top-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center text-muted-foreground px-4">
+            <div className="mb-6 sm:mb-8">
+              <div className="text-4xl sm:text-6xl font-bold text-primary mb-3 sm:mb-4">✕</div>
+              <h1 className="text-lg sm:text-2xl font-semibold mb-2">EXCALIDRAW</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8">All your data is saved locally in your browser.</p>
             </div>
-            <div className="space-y-4 text-left max-w-xs">
-              <div className="flex items-center gap-2 text-sm">
+            <div className="space-y-3 sm:space-y-4 text-left max-w-xs mx-auto">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <span>📁</span>
                 <span>Open</span>
                 <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs">Ctrl+O</kbd>
               </div>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <span>❓</span>
                 <span>Help</span>
                 <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs">?</kbd>
               </div>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <span>👥</span>
                 <span>Live collaboration...</span>
               </div>
             </div>
-            <div className="mt-8 text-center">
-              <p className="text-lg font-medium mb-2">Pick a tool &</p>
-              <p className="text-lg font-medium">Start drawing!</p>
-              <p className="text-xs text-muted-foreground mt-4">
+            <div className="mt-6 sm:mt-8 text-center">
+              <p className="text-base sm:text-lg font-medium mb-2">Pick a tool &</p>
+              <p className="text-base sm:text-lg font-medium">Start drawing!</p>
+              <p className="text-xs text-muted-foreground mt-3 sm:mt-4 max-w-sm mx-auto">
                 To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool
               </p>
             </div>

@@ -8,7 +8,9 @@ import {
   Settings,
   Palette,
   Type,
-  Zap
+  Zap,
+  Code,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +24,9 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
+import { LanguageSelector } from './LanguageSelector';
+import { TechStackSelector } from './TechStackSelector';
+import { ThemeToggle } from './ThemeToggle';
 
 interface MonacoEditorProps {
   value: string;
@@ -31,6 +36,9 @@ interface MonacoEditorProps {
   readOnly?: boolean;
   fileName?: string;
   onSave?: () => void;
+  onLanguageChange?: (language: string) => void;
+  onTechStackChange?: (stack: string) => void;
+  selectedTechStack?: string;
   collaborators?: Array<{
     name: string;
     avatar: string;
@@ -47,6 +55,9 @@ export const MonacoEditor = ({
   readOnly = false,
   fileName = 'untitled',
   onSave,
+  onLanguageChange,
+  onTechStackChange,
+  selectedTechStack = 'react',
   collaborators = []
 }: MonacoEditorProps) => {
   const editorRef = useRef<HTMLTextAreaElement>(null);
@@ -245,9 +256,14 @@ export const MonacoEditor = ({
       {/* Editor Header */}
       <div className="flex items-center justify-between p-2 border-b border-border bg-nav-background">
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className={`${getLanguageColor()} text-white text-xs`}>
-            {language.toUpperCase()}
-          </Badge>
+          <LanguageSelector 
+            selectedLanguage={language} 
+            onLanguageChange={onLanguageChange || (() => {})} 
+          />
+          <TechStackSelector 
+            selectedStack={selectedTechStack} 
+            onStackChange={onTechStackChange || (() => {})} 
+          />
           <span className="text-sm text-muted-foreground">
             Ln {cursorPosition.line}, Col {cursorPosition.column}
           </span>
@@ -257,6 +273,8 @@ export const MonacoEditor = ({
         </div>
 
         <div className="flex items-center gap-1">
+          <ThemeToggle />
+          
           <Button
             variant="ghost"
             size="sm"
@@ -287,12 +305,17 @@ export const MonacoEditor = ({
               
               <DropdownMenuItem onClick={() => setCurrentTheme(currentTheme === 'vs-dark' ? 'vs-light' : 'vs-dark')}>
                 <Palette className="h-4 w-4 mr-2" />
-                Toggle Theme
+                Toggle Editor Theme
               </DropdownMenuItem>
               
               <DropdownMenuItem onClick={() => setFontSize(prev => prev < 20 ? prev + 2 : 12)}>
                 <Type className="h-4 w-4 mr-2" />
                 Font Size: {fontSize}px
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={triggerAISuggestions}>
+                <Zap className="h-4 w-4 mr-2" />
+                AI Autocomplete (Ctrl+Space)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

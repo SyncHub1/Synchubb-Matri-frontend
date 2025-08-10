@@ -13,7 +13,11 @@ import {
   Upload,
   Zap,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  FileText,
+  Code,
+  Image,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,7 +93,15 @@ export const FileExplorer = ({
     }
     
     const ext = file.name.split('.').pop()?.toLowerCase();
-    return File; // Could be expanded with specific file type icons
+    switch (ext) {
+      case 'js': case 'jsx': case 'ts': case 'tsx': return Code;
+      case 'html': case 'htm': return FileText;
+      case 'css': case 'scss': case 'sass': return Code;
+      case 'json': case 'xml': case 'yml': case 'yaml': return Database;
+      case 'md': case 'txt': return FileText;
+      case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': return Image;
+      default: return File;
+    }
   };
 
   const getFileColor = (file: FileNode) => {

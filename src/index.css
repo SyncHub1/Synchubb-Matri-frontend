@@ -76,7 +76,7 @@
   }
 
   .dark {
-    /* Use same colors as root since we're dark by default */
+    /* Dark theme colors */
     --background: 220 20% 8%;
     --foreground: 210 40% 98%;
     --card: 220 18% 12%;
@@ -95,6 +95,29 @@
     --destructive-foreground: 210 40% 98%;
     --border: 220 15% 20%;
     --input: 220 15% 20%;
+    --ring: 262 73% 57%;
+  }
+
+  .light {
+    /* Light theme colors */
+    --background: 0 0% 100%;
+    --foreground: 222 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 84% 4.9%;
+    --primary: 262 73% 57%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 13% 65%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
     --ring: 262 73% 57%;
   }
 }

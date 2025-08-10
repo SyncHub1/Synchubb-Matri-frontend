@@ -59,6 +59,8 @@ const TeamIDE = () => {
   const [activeTab, setActiveTab] = useState("editor");
   const [editorTheme, setEditorTheme] = useState("vs-dark");
   const [selectedTemplate, setSelectedTemplate] = useState("react");
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [selectedTechStack, setSelectedTechStack] = useState("react");
   const [previewUrl, setPreviewUrl] = useState("http://localhost:8080");
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const editorRef = useRef(null);
@@ -604,10 +606,13 @@ export default EcoTracker;`);
               <MonacoEditor
                 value={code}
                 onChange={setCode}
-                language="javascript"
+                language={selectedLanguage}
                 theme={editorTheme}
                 fileName={activeFile}
                 onSave={saveFile}
+                onLanguageChange={setSelectedLanguage}
+                onTechStackChange={setSelectedTechStack}
+                selectedTechStack={selectedTechStack}
                 collaborators={collaborators}
               />
             </div>

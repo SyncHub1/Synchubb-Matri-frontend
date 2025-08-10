@@ -18,14 +18,37 @@ import {
   Menu,
   X,
   PanelLeft,
-  PanelRight
+  PanelRight,
+  Zap,
+  Brain,
+  Sparkles,
+  Code2,
+  Globe,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import MobileNavigation from "@/components/MobileNavigation";
+import { MonacoEditor } from "@/components/ide/MonacoEditor";
+import { EnhancedTerminal } from "@/components/ide/EnhancedTerminal";
+import { FileExplorer } from "@/components/ide/FileExplorer";
+import { toast } from "@/hooks/use-toast";
 
 const TeamIDE = () => {
   const { id } = useParams();
@@ -33,6 +56,13 @@ const TeamIDE = () => {
   const [terminalExpanded, setTerminalExpanded] = useState(false);
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState("editor");
+  const [editorTheme, setEditorTheme] = useState("vs-dark");
+  const [selectedTemplate, setSelectedTemplate] = useState("react");
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [selectedTechStack, setSelectedTechStack] = useState("react");
+  const [previewUrl, setPreviewUrl] = useState("http://localhost:8080");
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const editorRef = useRef(null);
   const [code, setCode] = useState(`// Welcome to SyncHubb Team IDE
 // Collaborative coding environment for your team
@@ -83,22 +113,57 @@ const EcoTracker = () => {
 export default EcoTracker;`);
 
   const files = [
-    { name: "app.js", type: "javascript", active: true },
-    { name: "components/", type: "folder", children: [
-      { name: "EcoTracker.jsx", type: "javascript" },
-      { name: "ActivityForm.jsx", type: "javascript" },
-      { name: "CarbonChart.jsx", type: "javascript" }
-    ]},
-    { name: "styles/", type: "folder", children: [
-      { name: "main.css", type: "css" },
-      { name: "components.css", type: "css" }
-    ]},
-    { name: "utils/", type: "folder", children: [
-      { name: "api.js", type: "javascript" },
-      { name: "calculations.js", type: "javascript" }
-    ]},
-    { name: "package.json", type: "json" },
-    { name: "README.md", type: "markdown" }
+    { 
+      id: "1", 
+      name: "app.js", 
+      type: "file" as const, 
+      path: "/app.js",
+      size: 2840,
+      modified: new Date(),
+      language: "javascript"
+    },
+    { 
+      id: "2",
+      name: "components", 
+      type: "folder" as const, 
+      path: "/components",
+      children: [
+        { id: "3", name: "EcoTracker.jsx", type: "file" as const, path: "/components/EcoTracker.jsx", size: 1256, language: "javascript" },
+        { id: "4", name: "ActivityForm.jsx", type: "file" as const, path: "/components/ActivityForm.jsx", size: 892, language: "javascript" },
+        { id: "5", name: "CarbonChart.jsx", type: "file" as const, path: "/components/CarbonChart.jsx", size: 1504, language: "javascript" }
+      ]
+    },
+    { 
+      id: "6",
+      name: "styles", 
+      type: "folder" as const, 
+      path: "/styles",
+      children: [
+        { id: "7", name: "main.css", type: "file" as const, path: "/styles/main.css", size: 456, language: "css" },
+        { id: "8", name: "components.css", type: "file" as const, path: "/styles/components.css", size: 678, language: "css" }
+      ]
+    },
+    { 
+      id: "9",
+      name: "utils", 
+      type: "folder" as const, 
+      path: "/utils",
+      children: [
+        { id: "10", name: "api.js", type: "file" as const, path: "/utils/api.js", size: 234, language: "javascript" },
+        { id: "11", name: "calculations.js", type: "file" as const, path: "/utils/calculations.js", size: 567, language: "javascript" }
+      ]
+    },
+    { id: "12", name: "package.json", type: "file" as const, path: "/package.json", size: 890, language: "json" },
+    { id: "13", name: "README.md", type: "file" as const, path: "/README.md", size: 1234, language: "markdown" }
+  ];
+
+  const templates = [
+    { id: "react", name: "React", description: "Modern React with Hooks" },
+    { id: "nextjs", name: "Next.js", description: "Full-stack React framework" },
+    { id: "vue", name: "Vue 3", description: "Progressive JavaScript framework" },
+    { id: "angular", name: "Angular", description: "Platform for mobile & desktop" },
+    { id: "express", name: "Express", description: "Fast Node.js web framework" },
+    { id: "fastapi", name: "FastAPI", description: "Modern Python web framework" }
   ];
 
   const collaborators = [
@@ -110,11 +175,47 @@ export default EcoTracker;`);
   const runCode = () => {
     console.log("Running code...");
     setTerminalExpanded(true);
+    toast({
+      title: "Code execution started",
+      description: "Your code is being compiled and executed.",
+    });
   };
 
   const saveFile = () => {
     console.log("Saving file:", activeFile);
     localStorage.setItem(`ide_file_${activeFile}`, code);
+    toast({
+      title: "File saved",
+      description: `${activeFile} has been saved successfully.`,
+    });
+  };
+
+  const handleFileSelect = (file: any) => {
+    if (file.type === 'file') {
+      setActiveFile(file.name);
+      setShowFileExplorer(false); // Close mobile file explorer
+      
+      // Load file content (in real app, this would fetch from server)
+      const savedCode = localStorage.getItem(`ide_file_${file.name}`);
+      if (savedCode) {
+        setCode(savedCode);
+      }
+    }
+  };
+
+  const deployProject = () => {
+    toast({
+      title: "Deployment started",
+      description: "Your project is being deployed to production.",
+    });
+  };
+
+  const openAIAssistant = () => {
+    setIsAiAssistantOpen(true);
+    toast({
+      title: "AI Assistant activated",
+      description: "Ask me anything about your code!",
+    });
   };
 
   useEffect(() => {
@@ -148,116 +249,196 @@ export default EcoTracker;`);
   };
 
   const FileExplorerContent = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm sm:text-base">Explorer</h3>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
-          <Plus className="h-3 w-3" />
-        </Button>
-      </div>
-      
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search files..."
-          className="w-full pl-7 pr-2 py-1 text-xs bg-background border border-input rounded"
-        />
-      </div>
-
-      <div className="space-y-1">
-        {renderFileTree(files)}
-      </div>
-    </div>
+    <FileExplorer
+      files={files}
+      activeFile={activeFile}
+      onFileSelect={handleFileSelect}
+      onFileCreate={(path, type) => {
+        console.log(`Creating ${type} at ${path}`);
+      }}
+      onFileDelete={(file) => {
+        console.log(`Deleting ${file.name}`);
+      }}
+      onFileRename={(file, newName) => {
+        console.log(`Renaming ${file.name} to ${newName}`);
+      }}
+    />
   );
 
   const RightPanelContent = () => (
-    <div className="space-y-4">
-      {/* AI Assistant */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">AI Code Assistant</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="bg-background rounded p-3 text-sm">
-            <p className="text-muted-foreground">💡 Suggestion:</p>
-            <p>Consider adding error handling for the API calls using try-catch blocks.</p>
-          </div>
-          <Button variant="outline" size="sm" className="w-full">
-            Apply Suggestion
-          </Button>
-        </CardContent>
-      </Card>
+    <Tabs defaultValue="ai-assistant" className="h-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="ai-assistant">AI</TabsTrigger>
+        <TabsTrigger value="chat">Chat</TabsTrigger>
+        <TabsTrigger value="preview">Preview</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="ai-assistant" className="space-y-4 mt-4">
+        {/* Enhanced AI Assistant */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Brain className="h-4 w-4 text-primary" />
+              AI Code Assistant
+              <Badge variant="default" className="text-xs">GPT-4</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="bg-background rounded p-3 text-sm border border-primary/20">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5" />
+                <div>
+                  <p className="text-muted-foreground text-xs">💡 Smart Suggestion:</p>
+                  <p className="text-sm">Consider adding error handling for the API calls using try-catch blocks. This will improve user experience and debugging.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1">
+                Apply Fix
+              </Button>
+              <Button variant="ghost" size="sm" className="flex-1">
+                Explain
+              </Button>
+            </div>
+            
+            <div className="border-t pt-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask AI about your code..."
+                  className="flex-1 px-2 py-1 text-xs border border-input rounded"
+                />
+                <Button size="sm" className="px-2 py-1 h-auto">
+                  <Zap className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Live Chat */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Live Chat
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            <div className="text-xs">
-              <span className="font-medium">Alex:</span> Working on the carbon calculation logic
-            </div>
-            <div className="text-xs">
-              <span className="font-medium">Sarah:</span> API integration looks good!
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              className="flex-1 px-2 py-1 text-xs border border-input rounded"
-            />
-            <Button size="sm" className="px-2 py-1 h-auto">
-              Send
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Code2 className="h-4 w-4 mr-2" />
+              Format Code
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Project Info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Project Info</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="text-xs">
-            <span className="font-medium">Lines:</span> {code.split('\n').length}
-          </div>
-          <div className="text-xs">
-            <span className="font-medium">Characters:</span> {code.length}
-          </div>
-          <div className="text-xs">
-            <span className="font-medium">Language:</span> JavaScript
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="text-xs flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-xs">A</AvatarFallback>
-            </Avatar>
-            <span>Alex edited <code>app.js</code></span>
-          </div>
-          <div className="text-xs flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-xs">S</AvatarFallback>
-            </Avatar>
-            <span>Sarah added <code>api.js</code></span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Zap className="h-4 w-4 mr-2" />
+              Auto-complete
+            </Button>
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Search className="h-4 w-4 mr-2" />
+              Find & Replace
+            </Button>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      
+      <TabsContent value="chat" className="space-y-4 mt-4">
+        {/* Enhanced Live Chat */}
+        <Card className="h-80">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Team Chat
+              <Badge variant="secondary" className="text-xs">{collaborators.length} online</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 h-full flex flex-col">
+            <div className="flex-1 space-y-2 overflow-y-auto">
+              <div className="text-xs flex items-start gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs">A</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">Alex</div>
+                  <div>Working on the carbon calculation logic. The API integration is almost done!</div>
+                </div>
+              </div>
+              <div className="text-xs flex items-start gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs">S</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">Sarah</div>
+                  <div>Great! I've added some error handling in the utils folder.</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2 border-t">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                className="flex-1 px-2 py-1 text-xs border border-input rounded"
+              />
+              <Button size="sm" className="px-2 py-1 h-auto">
+                Send
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      
+      <TabsContent value="preview" className="space-y-4 mt-4">
+        {/* Live Preview */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Live Preview
+              <Badge variant="secondary" className="text-xs">Auto-refresh</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="border rounded overflow-hidden">
+              <div className="h-40 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                <div className="text-center">
+                  <Globe className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Preview will appear here</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1">
+                <Globe className="h-3 w-3 mr-1" />
+                Open
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1">
+                Deploy
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Project Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Project Stats</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="text-xs">
+              <span className="font-medium">Lines:</span> {code.split('\n').length}
+            </div>
+            <div className="text-xs">
+              <span className="font-medium">Characters:</span> {code.length}
+            </div>
+            <div className="text-xs">
+              <span className="font-medium">Files:</span> 8
+            </div>
+            <div className="text-xs">
+              <span className="font-medium">Template:</span> {selectedTemplate}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 
   return (
@@ -420,65 +601,28 @@ export default EcoTracker;`);
 
           {/* Editor and Terminal Split */}
           <div className="flex-1 flex flex-col">
-            {/* Code Editor */}
-            <div className={`${terminalExpanded ? 'flex-1' : 'flex-1'} relative bg-background`}>
-              <textarea
-                ref={editorRef}
+            {/* Enhanced Monaco Editor */}
+            <div className={`${terminalExpanded ? 'flex-1' : 'flex-1'} relative`}>
+              <MonacoEditor
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full h-full resize-none border-none font-mono text-xs sm:text-sm bg-background p-3 sm:p-4 outline-none"
-                style={{ 
-                  minHeight: "100%",
-                  lineHeight: "1.5",
-                  tabSize: 2
-                }}
-                spellCheck={false}
+                onChange={setCode}
+                language={selectedLanguage}
+                theme={editorTheme}
+                fileName={activeFile}
+                onSave={saveFile}
+                onLanguageChange={setSelectedLanguage}
+                onTechStackChange={setSelectedTechStack}
+                selectedTechStack={selectedTechStack}
+                collaborators={collaborators}
               />
-              
-              {/* Collaboration Cursors - Hide on mobile */}
-              <div className="hidden sm:block">
-                {collaborators.map((collab) => (
-                  <div
-                    key={collab.name}
-                    className="absolute pointer-events-none"
-                    style={{
-                      top: `${collab.cursor.line * 1.5}rem`,
-                      left: `${collab.cursor.column * 0.6}rem`
-                    }}
-                  >
-                    <div className={`w-0.5 h-5 ${collab.color}`}></div>
-                    <Badge variant="secondary" className={`text-xs ${collab.color} text-white border-none`}>
-                      {collab.name}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            {/* Terminal Section */}
-            {terminalExpanded && (
-              <div className="h-48 sm:h-64 border-t border-border bg-nav-background flex flex-col">
-                <div className="flex items-center justify-between p-2 border-b border-border">
-                  <h3 className="text-xs sm:text-sm font-medium">Terminal</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6"
-                    onClick={() => setTerminalExpanded(false)}
-                  >
-                    <Minimize2 className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="flex-1 bg-black text-green-400 p-3 sm:p-4 font-mono text-xs sm:text-sm overflow-y-auto">
-                  <div>$ npm run dev</div>
-                  <div>Starting development server...</div>
-                  <div className="text-green-500">✓ Compiled successfully</div>
-                  <div>Local: http://localhost:3000</div>
-                  <div className="hidden sm:block">Network: http://192.168.1.100:3000</div>
-                  <div className="mt-2">$ </div>
-                </div>
-              </div>
-            )}
+            {/* Enhanced Terminal */}
+            <EnhancedTerminal
+              expanded={terminalExpanded}
+              onToggle={() => setTerminalExpanded(!terminalExpanded)}
+              className="h-48 sm:h-64"
+            />
           </div>
         </main>
 

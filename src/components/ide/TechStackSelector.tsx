@@ -27,6 +27,7 @@ interface TechStack {
 interface TechStackSelectorProps {
   selectedStack: string;
   onStackChange: (stack: string) => void;
+  onEnvironmentSetup?: (stackId: string) => void;
 }
 
 const techStacks: TechStack[] = [
@@ -172,10 +173,19 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-export const TechStackSelector = ({ selectedStack, onStackChange }: TechStackSelectorProps) => {
+export const TechStackSelector = ({ selectedStack, onStackChange, onEnvironmentSetup }: TechStackSelectorProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [isSetupTriggered, setIsSetupTriggered] = useState(false);
   const currentStack = techStacks.find(stack => stack.id === selectedStack) || techStacks[0];
   const Icon = currentStack.icon;
+
+  const handleStackSelection = (stackId: string) => {
+    onStackChange(stackId);
+    onEnvironmentSetup?.(stackId);
+    setIsSetupTriggered(true);
+    // Reset after a short delay to allow environment setup to be triggered
+    setTimeout(() => setIsSetupTriggered(false), 100);
+  };
 
   const groupedStacks = techStacks.reduce((acc, stack) => {
     if (!acc[stack.category]) {
@@ -213,7 +223,7 @@ export const TechStackSelector = ({ selectedStack, onStackChange }: TechStackSel
                   return (
                     <DropdownMenuItem
                       key={stack.id}
-                      onClick={() => onStackChange(stack.id)}
+                      onClick={() => handleStackSelection(stack.id)}
                       className="flex items-center justify-between p-3 cursor-pointer"
                     >
                       <div className="flex items-center gap-3">

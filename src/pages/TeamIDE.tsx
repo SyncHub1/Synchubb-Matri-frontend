@@ -48,6 +48,8 @@ import MobileNavigation from "@/components/MobileNavigation";
 import { MonacoEditor } from "@/components/ide/MonacoEditor";
 import { EnhancedTerminal } from "@/components/ide/EnhancedTerminal";
 import { FileExplorer } from "@/components/ide/FileExplorer";
+import { EnvironmentSetup } from "@/components/ide/EnvironmentSetup";
+import { GitHubIntegration } from "@/components/ide/GitHubIntegration";
 import { toast } from "@/hooks/use-toast";
 
 const TeamIDE = () => {
@@ -63,6 +65,8 @@ const TeamIDE = () => {
   const [selectedTechStack, setSelectedTechStack] = useState("react");
   const [previewUrl, setPreviewUrl] = useState("http://localhost:8080");
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [showEnvironmentSetup, setShowEnvironmentSetup] = useState(false);
+  const [environmentReady, setEnvironmentReady] = useState(false);
   const editorRef = useRef(null);
   const [code, setCode] = useState(`// Welcome to SyncHubb Team IDE
 // Collaborative coding environment for your team
@@ -274,6 +278,33 @@ export default EcoTracker;`);
       </TabsList>
       
       <TabsContent value="ai-assistant" className="space-y-4 mt-4">
+        {/* Environment Setup */}
+        {showEnvironmentSetup && (
+          <EnvironmentSetup
+            selectedStack={selectedTechStack}
+            selectedLanguage={selectedLanguage}
+            onEnvironmentReady={(config) => {
+              setEnvironmentReady(true);
+              console.log('Environment configured:', config);
+            }}
+            onFilesGenerated={(files) => {
+              console.log('Files generated:', files);
+              // In real implementation, these would be added to the file explorer
+              toast({
+                title: "Files generated",
+                description: `${files.length} starter files created for ${selectedTechStack}`,
+              });
+            }}
+          />
+        )}
+
+        {/* GitHub Integration */}
+        <GitHubIntegration
+          currentCode={code}
+          fileName={activeFile}
+          projectName="synchubb-project"
+        />
+
         {/* Enhanced AI Assistant */}
         <Card>
           <CardHeader className="pb-3">
@@ -611,7 +642,11 @@ export default EcoTracker;`);
                 fileName={activeFile}
                 onSave={saveFile}
                 onLanguageChange={setSelectedLanguage}
-                onTechStackChange={setSelectedTechStack}
+                onTechStackChange={(stack) => {
+                  setSelectedTechStack(stack);
+                  setShowEnvironmentSetup(true);
+                  setEnvironmentReady(false);
+                }}
                 selectedTechStack={selectedTechStack}
                 collaborators={collaborators}
               />

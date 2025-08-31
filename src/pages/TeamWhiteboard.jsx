@@ -6,6 +6,7 @@ import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { ColorPicker } from "@/components/whiteboard/ColorPicker";
 import { StrokeControls } from "@/components/whiteboard/StrokeControls";
+import { SizeControls } from "@/components/whiteboard/SizeControls"
 import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
@@ -18,7 +19,12 @@ const TeamWhiteboard = () => {
   const [fabricCanvas, setFabricCanvas] = useState(null);
   const [selectedTool, setSelectedTool] = useState("select");
   const [selectedColor, setSelectedColor] = useState("#000000");
+  const [selectedObject, setSelectedObject] = useState(null);
   const [brushSize, setBrushSize] = useState(3);
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
+  const [diameter, setDiameter] = useState("");
+  const [color, setColor] = useState("");  
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   
@@ -121,13 +127,14 @@ const TeamWhiteboard = () => {
       }
 
       // Delete selected objects
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === 'Delete') {
         const activeObjects = fabricCanvas?.getActiveObjects();
         if (activeObjects && activeObjects.length > 0) {
           activeObjects.forEach(obj => fabricCanvas.remove(obj));
           fabricCanvas.discardActiveObject();
           fabricCanvas.requestRenderAll();
           toast.success("Objects deleted");
+          console.log("Hello");
         }
       }
 
@@ -143,14 +150,57 @@ const TeamWhiteboard = () => {
         '8': 'text'
       };
 
-      if (toolShortcuts[e.key]) {
-        setSelectedTool(toolShortcuts[e.key]);
-      }
+      //if (toolShortcuts[e.key]) {
+        //setSelectedTool(toolShortcuts[e.key]);
+      //}
     };
 
+    if (fabricCanvas) {
+        fabricCanvas.on("selection:created", (event) => {
+            handleObjectSelection(event.selected[0]);
+        });
+        fabricCanvas.on("selection:updated", (event) => {
+            handleObjectSelection(event.selected[0]);
+        });
+        fabricCanvas.on("selection:cleared", (event) => {
+            setSelectedObject(null);
+            clearSettings();
+        });
+        fabricCanvas.on("object:modified", (event) => {
+            handleObjectSelection(event.target);
+        });
+        fabricCanvas.on("object:scaling", (event) => {
+            handleObjectSelection(event.target);
+        });
+        }
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    
   }, [fabricCanvas]);
+
+
+    const handleObjectSelection = (object) => {
+        if (!object) return;
+
+        setSelectedObject(object);
+        if (object.type === 'rect') {
+            setWidth(Math.round(object.width * object.scaleX));
+            setHeight(Math.round(object.height * object.scaleY));
+            setColor(object.stroke);
+            setDiameter("");
+        } else if (object.type === 'circle'){
+            setDiameter(Math.round(object.radius * 2 * object.scaleX));
+            setColor(object.stroke);
+            setWidth("");
+            setHeight("");
+        }  else if (object.type === 'line'){
+            setWidth(Math.round(object.width * object.scaleX));
+            setColor(object.stroke);
+            setHeight("");
+            setDiameter("");
+        }
+    };    
 
   // Simulate collaborative cursor movement
   useEffect(() => {
@@ -160,9 +210,63 @@ const TeamWhiteboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const clearSettings = () => {
+        setWidth("");
+        setHeight("");
+        setColor("");
+        setDiameter("");
+    };
+  
   const handleCanvasReady = (canvas) => {
     setFabricCanvas(canvas);
   };
+
+  const handleBrushSizeChange = (e) => {
+    const value = e.target.value;
+    setBrushSize(value)
+    fabricCanvas.renderAll();
+  }
+
+  const handleWidthChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setWidth(IntValue);
+    selectedObject.set({width: IntValue / selectedObject.scaleX});
+    if (selectedObject && (selectedObject.type === "rect" || selectedObject.type === "line") && IntValue >= 0) {
+        selectedObject.set({width: IntValue / selectedObject.scaleX});
+        fabricCanvas.renderAll();
+    }
+  }
+
+  const handleHeightChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setHeight(IntValue);
+    if (selectedObject && selectedObject.type === "rect" && IntValue >= 0) {
+        selectedObject.set({height: IntValue / selectedObject.scaleY});
+        fabricCanvas.renderAll();
+    }  
+  }
+
+  const handleDiameterChange = (e) => {
+      const value = e.target.value.replace(/,/g, "");
+      const IntValue = parseInt(value, 10)
+      setDiameter(IntValue);
+      if (selectedObject && selectedObject.type === "circle" && IntValue >= 0) {
+          selectedObject.set({radius: IntValue / 2 / selectedObject.scaleX});
+          fabricCanvas.renderAll();
+      }           
+  };
+
+  const handleColorChange = (color) => {
+      const value = color;
+      console.log(value);
+      setColor(value);
+      if (selectedObject) {
+          selectedObject.set({stroke: value});
+          fabricCanvas.renderAll();
+      }
+  };  
 
   const handleExportImage = () => {
     if (!fabricCanvas) return;
@@ -323,13 +427,22 @@ const TeamWhiteboard = () => {
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
       {selectedTool !== "select" && selectedTool !== "hand" && (
         <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
+          <SizeControls 
+            selectedObject={selectedObject}
+            handleWidthChange={handleWidthChange} 
+            handleHeightChange={handleHeightChange} 
+            handleDiameterChange={handleDiameterChange}
+            height={height} 
+            width={width}
+            diameter={diameter}/>
           <ColorPicker 
             selectedColor={selectedColor}
-            onColorSelect={setSelectedColor}
+            handleColorChange={handleColorChange}
+            color={color}
           />
           <StrokeControls 
             brushSize={brushSize}
-            onBrushSizeChange={setBrushSize}
+            setBrushSize={setBrushSize}
           />
         </div>
       )}

@@ -135,7 +135,6 @@ const TeamWhiteboard = () => {
           fabricCanvas.discardActiveObject();
           fabricCanvas.requestRenderAll();
           toast.success("Objects deleted");
-          console.log("Hello");
         }
       }
 
@@ -182,7 +181,6 @@ const TeamWhiteboard = () => {
 
 
     const handleObjectSelection = (object) => {
-        console.log(object.type);
         if (!object) return;
 
         setSelectedObject(object);
@@ -209,6 +207,11 @@ const TeamWhiteboard = () => {
         } else if (object.type === 'path'){
             setWidth("");
             setColor(object.stroke);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === 'i-text'){
+            setWidth("");
+            setFillColor(object.fill);
             setHeight("");
             setDiameter("");
         }
@@ -338,11 +341,12 @@ function setArrowWidth(arrowGroup, visualWidth) {
         const line = selectedObject.item(0);
         const head = selectedObject.item(1);
         line.set({ stroke: color });
-        head.set({ fill: color, stroke: color });     
-      fabricCanvas.renderAll();
+        head.set({ fill: color });     
       } else {
-        setSelectedColor(value);
+        setSelectedColor(color);
+        selectedObject.set({fill: color});
       }
+      fabricCanvas.renderAll();
   };   
 
   const handleExportImage = () => {
@@ -568,6 +572,7 @@ function setArrowWidth(arrowGroup, visualWidth) {
           selectedColor={selectedColor}
           brushSize={brushSize}
           zoom={zoom}
+          setSelectedColor={setSelectedColor}
           onCanvasReady={handleCanvasReady}
           onImageUpload={handleImageUpload}
         />

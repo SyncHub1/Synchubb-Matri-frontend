@@ -7,6 +7,7 @@ interface WhiteboardCanvasProps {
   selectedColor: string;
   brushSize: number;
   zoom: number;
+  setSelectedColor: React.Dispatch<React.SetStateAction<string>>;
   onCanvasReady: (canvas: FabricCanvas) => void;
   onImageUpload?: (file: File) => void;
 }
@@ -16,6 +17,7 @@ export const WhiteboardCanvas = ({
   selectedColor, 
   brushSize, 
   zoom, 
+  setSelectedColor,
   onCanvasReady,
   onImageUpload 
 }: WhiteboardCanvasProps) => {
@@ -263,6 +265,7 @@ export const WhiteboardCanvas = ({
         break;
     }
     fabricCanvas.renderAll();
+    setSelectedColor("#000");
   };
 
   // Enhanced text editing with shape detection

@@ -17,10 +17,10 @@ export const ColorPicker = ({ selectedObject, color, handleColorChange, fillColo
     "#0891B2", "#0284C7", "#2563EB", "#4F46E5", "#7C3AED", "#A855F7", "#C026D3",
     "#E11D48"
   ];
-  console.log("Without object");
+
   return (
     <div>
-      {selectedObject?.type !== 'group' && (
+      {(selectedObject?.type !== 'group' && selectedObject?.type !== 'i-text' ) && (
         <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="icon" className="h-10 w-10">
@@ -57,7 +57,7 @@ export const ColorPicker = ({ selectedObject, color, handleColorChange, fillColo
         </PopoverContent>
       </Popover>
       )}
-      {selectedObject?.type === 'group' && (
+      {(selectedObject?.type === 'group' || selectedObject?.type === 'i-text') &&(
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="icon" className="h-10 w-10">

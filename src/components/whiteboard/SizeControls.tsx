@@ -51,7 +51,19 @@ export const SizeControls = ({selectedObject, handleHeightChange, handleWidthCha
                     <Input onChange={handleWidthChange} value={width+'px'}/>
                 </div>
             </div>
-        )}        
+        )}
+        {selectedObject?.type === 'triangle' && (
+        <div> 
+          <div>
+            <Label>Width:</Label>
+            <Input onChange={handleWidthChange}  value={[width+'px']}/>
+          </div>
+          <div>
+            <Label>Height:</Label>
+            <Input onChange={handleHeightChange}  value={[height+'px']}/>
+          </div>
+        </div>
+      )}        
     </div>
   )
 }

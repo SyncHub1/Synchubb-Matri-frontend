@@ -1,6 +1,7 @@
 import { 
   MousePointer2, Hand, Square, Circle, Triangle, ArrowRight, 
-  Minus, Pen, Type, Image as ImageIcon, Eraser 
+  Minus, Pen, Type, Image as ImageIcon, Eraser, 
+  TriangleIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,11 +16,12 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
     { id: "hand", icon: Hand, label: "Hand", shortcut: "2" },
     { id: "rectangle", icon: Square, label: "Rectangle", shortcut: "3" },
     { id: "circle", icon: Circle, label: "Circle", shortcut: "4" },
-    { id: "arrow", icon: ArrowRight, label: "Arrow", shortcut: "5" },
-    { id: "line", icon: Minus, label: "Line", shortcut: "6" },
-    { id: "pen", icon: Pen, label: "Draw", shortcut: "7" },
-    { id: "text", icon: Type, label: "Text", shortcut: "8" },
-    { id: "image", icon: ImageIcon, label: "Image", shortcut: "9" },
+    { id: "triangle", icon: TriangleIcon, label: "Triangle", shortcut: "5" },
+    { id: "arrow", icon: ArrowRight, label: "Arrow", shortcut: "6" },
+    { id: "line", icon: Minus, label: "Line", shortcut: "7" },
+    { id: "pen", icon: Pen, label: "Draw", shortcut: "8" },
+    { id: "text", icon: Type, label: "Text", shortcut: "9" },
+    { id: "image", icon: ImageIcon, label: "Image", shortcut: "" },
     { id: "eraser", icon: Eraser, label: "Eraser", shortcut: "0" }
   ];
 

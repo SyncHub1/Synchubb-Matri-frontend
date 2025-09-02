@@ -212,9 +212,15 @@ const TeamWhiteboard = () => {
         } else if (object.type === 'i-text'){
             setWidth("");
             setFillColor(object.fill);
+            setColor("");
             setHeight("");
             setDiameter("");
-        }
+        } else if (object.type === "triangle") {
+            setWidth(Math.round(object.width * object.scaleX));
+            setHeight(Math.round(object.height * object.scaleY));
+            setColor(object.stroke); 
+            setDiameter("");
+}
     };    
 
 function setArrowWidth(arrowGroup, visualWidth) {

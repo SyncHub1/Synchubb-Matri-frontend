@@ -182,6 +182,7 @@ const TeamWhiteboard = () => {
 
 
     const handleObjectSelection = (object) => {
+        console.log(object.type);
         if (!object) return;
 
         setSelectedObject(object);
@@ -203,6 +204,11 @@ const TeamWhiteboard = () => {
         } else if (object.type === 'group'){
             setWidth(Math.round(object.width * object.scaleX));
             setFillColor(object.fill);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === 'path'){
+            setWidth("");
+            setColor(object.stroke);
             setHeight("");
             setDiameter("");
         }
@@ -321,6 +327,8 @@ function setArrowWidth(arrowGroup, visualWidth) {
       if (selectedObject) {
           selectedObject.set({stroke: value});
           fabricCanvas.renderAll();
+      } else {
+        setSelectedColor(value);
       }
   };  
 
@@ -332,6 +340,8 @@ function setArrowWidth(arrowGroup, visualWidth) {
         line.set({ stroke: color });
         head.set({ fill: color, stroke: color });     
       fabricCanvas.renderAll();
+      } else {
+        setSelectedColor(value);
       }
   };   
 
@@ -492,7 +502,7 @@ function setArrowWidth(arrowGroup, visualWidth) {
       </div>
 
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
-      {selectedTool !== "select" && selectedTool !== "hand" && (
+      {selectedTool !== "hand" && (
         <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
           <SizeControls 
             selectedObject={selectedObject}

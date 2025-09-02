@@ -13,6 +13,7 @@ type SizeControlsProps = {
 };
 
 export const SizeControls = ({selectedObject, handleHeightChange, handleWidthChange, handleDiameterChange, width, height, diameter }:SizeControlsProps) => {
+  console.log(selectedObject?.type)
   return (
     <div>
       {selectedObject?.type === 'rect' && (
@@ -43,6 +44,14 @@ export const SizeControls = ({selectedObject, handleHeightChange, handleWidthCha
                 </div>
             </div>
         )}
+        {selectedObject?.type === 'group' && (
+            <div>
+                <div>
+                    <Label>Length:</Label>
+                    <Input onChange={handleWidthChange} value={width+'px'}/>
+                </div>
+            </div>
+        )}        
     </div>
   )
 }

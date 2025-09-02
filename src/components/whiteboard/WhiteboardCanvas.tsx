@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection, Group } from "fabric";
 import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
@@ -203,14 +203,38 @@ export const WhiteboardCanvas = ({
         fabricCanvas.setActiveObject(line);
         break;
 
-      case "arrow":
-        const arrow = new Line([centerX - 50, centerY, centerX + 50, centerY], {
+      case "arrow": {
+        const line = new Line(
+          [centerX - 50, centerY, centerX + 50, centerY],{
           stroke: selectedColor,
           strokeWidth: brushSize
+          });
+
+        const angle = Math.atan2(
+          centerY - centerY,
+          centerX + 50 - (centerX - 50)
+        ) * (180 / Math.PI);
+
+        const head = new Triangle({
+          left: centerX + 50,
+          top: centerY,
+          originX: "center",
+          originY: "center",
+          angle: angle + 90,
+          width: 12,
+          height: 18,
         });
+
+        const arrow = new Group([line, head], {
+          selectable: true,
+          objectCaching: false,
+        });
+
         fabricCanvas.add(arrow);
         fabricCanvas.setActiveObject(arrow);
         break;
+      };
+        
 
       case "triangle":
         const triangle = new Triangle({

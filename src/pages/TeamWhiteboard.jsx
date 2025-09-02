@@ -18,13 +18,14 @@ const TeamWhiteboard = () => {
   const { id } = useParams();
   const [fabricCanvas, setFabricCanvas] = useState(null);
   const [selectedTool, setSelectedTool] = useState("select");
-  const [selectedColor, setSelectedColor] = useState("#000000");
+  const [selectedColor, setSelectedColor] = useState("#000000")
   const [selectedObject, setSelectedObject] = useState(null);
   const [brushSize, setBrushSize] = useState(3);
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [diameter, setDiameter] = useState("");
   const [color, setColor] = useState("");  
+  const [fillColor, setFillColor] = useState("");
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   
@@ -199,8 +200,58 @@ const TeamWhiteboard = () => {
             setColor(object.stroke);
             setHeight("");
             setDiameter("");
+        } else if (object.type === 'group'){
+            setWidth(Math.round(object.width * object.scaleX));
+            setFillColor(object.fill);
+            setHeight("");
+            setDiameter("");
         }
     };    
+
+function setArrowWidth(arrowGroup, visualWidth) {
+  if (!arrowGroup || arrowGroup.type !== "group") return;
+  const line = arrowGroup.item(0);
+  const head = arrowGroup.item(1);
+  if (!line || !head) return;
+
+  const groupScaleX = arrowGroup.scaleX || 1;
+  const localHalf = (visualWidth / groupScaleX) / 2;
+
+  line.set({
+    x1: -localHalf,
+    y1: 0,
+    x2:  localHalf,
+    y2: 0,
+    strokeUniform: true,
+  });
+  head.set({
+    left: localHalf,
+    top: 0,
+    angle: 90,          
+    originX: "center",
+    originY: "center",
+  });
+
+  line.setCoords();
+  head.setCoords();
+
+  if (typeof arrowGroup._calcBounds === "function") {
+    arrowGroup._calcBounds();
+  }
+  if (typeof arrowGroup._updateObjectsCoords === "function") {
+    arrowGroup._updateObjectsCoords();
+  }
+
+  try { arrowGroup.addWithUpdate(); } catch (e) { }
+  arrowGroup.setCoords();
+
+  arrowGroup.dirty = true;
+  if (arrowGroup.canvas) {
+    arrowGroup.canvas.requestRenderAll();
+  }
+};
+
+
 
   // Simulate collaborative cursor movement
   useEffect(() => {
@@ -232,11 +283,17 @@ const TeamWhiteboard = () => {
     const IntValue = parseInt(value, 10)
     setWidth(IntValue);
     selectedObject.set({width: IntValue / selectedObject.scaleX});
-    if (selectedObject && (selectedObject.type === "rect" || selectedObject.type === "line") && IntValue >= 0) {
+
+    if(!selectedObject || IntValue <=0 ) return;
+
+    if (selectedObject.type === "rect" || selectedObject.type === "line") {
         selectedObject.set({width: IntValue / selectedObject.scaleX});
-        fabricCanvas.renderAll();
-    }
-  }
+    } else if (selectedObject.type === "group") {
+      setArrowWidth(selectedObject, IntValue);
+    };
+
+    fabricCanvas.requestRenderAll();
+  };
 
   const handleHeightChange = (e) => {
     const value = e.target.value.replace(/,/g, "");
@@ -260,13 +317,23 @@ const TeamWhiteboard = () => {
 
   const handleColorChange = (color) => {
       const value = color;
-      console.log(value);
       setColor(value);
       if (selectedObject) {
           selectedObject.set({stroke: value});
           fabricCanvas.renderAll();
       }
   };  
+
+  const handleFillColorChange = (color) => {
+      setFillColor(color);
+      if (selectedObject && selectedObject.type === 'group') {
+        const line = selectedObject.item(0);
+        const head = selectedObject.item(1);
+        line.set({ stroke: color });
+        head.set({ fill: color, stroke: color });     
+      fabricCanvas.renderAll();
+      }
+  };   
 
   const handleExportImage = () => {
     if (!fabricCanvas) return;
@@ -435,10 +502,13 @@ const TeamWhiteboard = () => {
             height={height} 
             width={width}
             diameter={diameter}/>
-          <ColorPicker 
+          <ColorPicker
+            selectedObject={selectedObject} 
             selectedColor={selectedColor}
             handleColorChange={handleColorChange}
+            handleFillColorChange={handleFillColorChange}
             color={color}
+            fillColor={fillColor}
           />
           <StrokeControls 
             brushSize={brushSize}

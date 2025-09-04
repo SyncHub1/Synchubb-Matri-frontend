@@ -2,10 +2,10 @@ import { Slider } from "@/components/ui/slider";
 
 interface StrokeControlsProps {
   brushSize: number;
-  onBrushSizeChange: (size: number) => void;
+  setBrushSize: (size: number) => void;
 }
 
-export const StrokeControls = ({ brushSize, onBrushSizeChange }: StrokeControlsProps) => {
+export const StrokeControls = ({ brushSize, setBrushSize }: StrokeControlsProps) => {
   return (
     <div className="bg-background border border-border rounded-lg shadow-lg p-3 min-w-[200px]">
       <div className="space-y-3">
@@ -15,7 +15,7 @@ export const StrokeControls = ({ brushSize, onBrushSizeChange }: StrokeControlsP
         </div>
         <Slider
           value={[brushSize]}
-          onValueChange={(value) => onBrushSizeChange(value[0])}
+          onValueChange={(value) => setBrushSize(value[0])}
           max={20}
           min={1}
           step={1}

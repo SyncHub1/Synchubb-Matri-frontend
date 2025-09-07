@@ -223,48 +223,6 @@ const TeamWhiteboard = () => {
 }
     };    
 
-function setArrowWidth(arrowGroup, visualWidth) {
-  if (!arrowGroup || arrowGroup.type !== "group") return;
-  const line = arrowGroup.item(0);
-  const head = arrowGroup.item(1);
-  if (!line || !head) return;
-
-  const groupScaleX = arrowGroup.scaleX || 1;
-  const localHalf = (visualWidth / groupScaleX) / 2;
-
-  line.set({
-    x1: -localHalf,
-    y1: 0,
-    x2:  localHalf,
-    y2: 0,
-    strokeUniform: true,
-  });
-  head.set({
-    left: localHalf,
-    top: 0,
-    angle: 90,          
-    originX: "center",
-    originY: "center",
-  });
-
-  line.setCoords();
-  head.setCoords();
-
-  if (typeof arrowGroup._calcBounds === "function") {
-    arrowGroup._calcBounds();
-  }
-  if (typeof arrowGroup._updateObjectsCoords === "function") {
-    arrowGroup._updateObjectsCoords();
-  }
-
-  try { arrowGroup.addWithUpdate(); } catch (e) { }
-  arrowGroup.setCoords();
-
-  arrowGroup.dirty = true;
-  if (arrowGroup.canvas) {
-    arrowGroup.canvas.requestRenderAll();
-  }
-};
 
 
 
@@ -531,6 +489,7 @@ function setArrowWidth(arrowGroup, visualWidth) {
             fillColor={fillColor}
           />
           <StrokeControls 
+            selectedTool={selectedTool}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
           />

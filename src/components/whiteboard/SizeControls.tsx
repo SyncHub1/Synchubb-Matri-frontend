@@ -36,22 +36,6 @@ export const SizeControls = ({selectedObject, handleHeightChange, handleWidthCha
                 </div>
             </div>
         )}
-        {selectedObject?.type === 'line' && (
-            <div>
-                <div>
-                    <Label>Length:</Label>
-                    <Input onChange={handleWidthChange} value={width+'px'}/>
-                </div>
-            </div>
-        )}
-        {selectedObject?.type === 'group' && (
-            <div>
-                <div>
-                    <Label>Length:</Label>
-                    <Input onChange={handleWidthChange} value={width+'px'}/>
-                </div>
-            </div>
-        )}
         {selectedObject?.type === 'triangle' && (
         <div> 
           <div>

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection, Group } from "fabric";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection, Group, Path } from "fabric";
 import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
@@ -16,13 +16,18 @@ export const WhiteboardCanvas = ({
   selectedTool, 
   selectedColor, 
   brushSize, 
-  zoom, 
+  zoom,
   setSelectedColor,
   onCanvasReady,
   onImageUpload 
 }: WhiteboardCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const LineRef = useRef(null);
+  const ArrowHead1Ref = useRef(null);
+  const ArrowHead2Ref = useRef(null);
+  const mouseDown = useRef(false);
+  const shapeTypeRef = useRef<string>("");
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -134,7 +139,7 @@ export const WhiteboardCanvas = ({
       fabricCanvas.defaultCursor = "text";
     } else {
       fabricCanvas.isDrawingMode = false;
-      fabricCanvas.selection = true;
+      fabricCanvas.selection = false;
     }
   }, [selectedTool, selectedColor, brushSize, fabricCanvas]);
 
@@ -163,8 +168,8 @@ export const WhiteboardCanvas = ({
   }, [fabricCanvas]);
 
   const addShape = (shapeType: string) => {
+    shapeTypeRef.current = shapeType;
     if (!fabricCanvas) return;
-
     const centerX = fabricCanvas.width! / 2;
     const centerY = fabricCanvas.height! / 2;
 
@@ -197,46 +202,33 @@ export const WhiteboardCanvas = ({
         break;
 
       case "line":
-        const line = new Line([centerX - 50, centerY, centerX + 50, centerY], {
-          stroke: selectedColor,
-          strokeWidth: brushSize
+        fabricCanvas.selection = false;
+        fabricCanvas.on({
+          'mouse:down': addingShapeOnMouseDown,
+          'mouse:move': drawingShapeOnMouseMove,
+          'mouse:up': stopDrawingOnMouseUp
         });
-        fabricCanvas.add(line);
-        fabricCanvas.setActiveObject(line);
         break;
 
-      case "arrow": {
-        const line = new Line(
-          [centerX - 50, centerY, centerX + 50, centerY],{
-          stroke: selectedColor,
-          strokeWidth: brushSize
-          });
-
-        const angle = Math.atan2(
-          centerY - centerY,
-          centerX + 50 - (centerX - 50)
-        ) * (180 / Math.PI);
-
-        const head = new Triangle({
-          left: centerX + 50,
-          top: centerY,
-          originX: "center",
-          originY: "center",
-          angle: angle + 90,
-          width: 12,
-          height: 18,
+      case "single-arrow": {
+        fabricCanvas.selection = false;
+        fabricCanvas.on({
+          'mouse:down': addingShapeOnMouseDown,
+          'mouse:move': drawingShapeOnMouseMove,
+          'mouse:up': stopDrawingOnMouseUp
         });
-
-        const arrow = new Group([line, head], {
-          selectable: true,
-          objectCaching: false,
-        });
-
-        fabricCanvas.add(arrow);
-        fabricCanvas.setActiveObject(arrow);
         break;
       };
         
+      case "double-arrow": {
+        fabricCanvas.selection = false;
+        fabricCanvas.on({
+          'mouse:down': addingShapeOnMouseDown,
+          'mouse:move': drawingShapeOnMouseMove,
+          'mouse:up': stopDrawingOnMouseUp
+        });
+        break;
+      }
 
       case "triangle":
         const triangle = new Triangle({
@@ -266,6 +258,196 @@ export const WhiteboardCanvas = ({
     }
     fabricCanvas.renderAll();
     setSelectedColor("#000");
+  };
+
+  function addingShapeOnMouseDown(e) {
+    console.log("add");
+    const shapeType = shapeTypeRef.current;
+    mouseDown.current = true;
+    let pointer = fabricCanvas.getViewportPoint(e);
+    let linePath = 'M' + pointer.x + ' ' + pointer.y + ' L ' + pointer.x + ' ' + pointer.y;
+    const line = new Path(linePath, {
+      stroke: selectedColor,
+      strokeWidth: 3,
+      originX: 'center',
+      originY: 'center',
+      hasControls: false,
+      hasBorders: false,
+      objectCaching: false
+    });
+    fabricCanvas.add(line);
+    LineRef.current = line;
+
+    let arrowHeadPath = 'M 0 0 L 20 10 L 0 20 Z';
+
+    if (shapeType === 'single-arrow' || shapeType === 'double-arrow'){
+      const arrowHead1 = new Path(arrowHeadPath, {
+        label: 'arrow-line',
+        fill: selectedColor,
+        stroke: selectedColor,
+        strokeWidth: 0,
+        originX: 'center',
+        originY: 'center',
+        hasBorders: false,
+        hasControls: false,
+        top: pointer.y,
+        left: pointer.x
+      });
+      fabricCanvas.add(arrowHead1)
+      ArrowHead1Ref.current = arrowHead1;
+    ;
+    }
+
+    if (shapeType === 'double-arrow'){
+      const arrowHead2 = new Path(arrowHeadPath, {
+        label: 'arrow-line',
+        fill: selectedColor,
+        stroke: selectedColor,
+        strokeWidth: 0,
+        originX: 'center',
+        originY: 'center',
+        hasBorders: false,
+        hasControls: false,
+        top: pointer.y,
+        left: pointer.x,
+        angle: 180
+      });
+      fabricCanvas.add(arrowHead2);
+      ArrowHead2Ref.current = arrowHead2;
+    }
+    fabricCanvas.requestRenderAll();
+    console.log(pointer);
+  };
+
+  function drawingShapeOnMouseMove(e) {
+    console.log("draw");
+    const shapeType = shapeTypeRef.current;
+    const line = LineRef.current;
+    const arrowHead1 = ArrowHead1Ref.current;
+    const arrowHead2 = ArrowHead2Ref.current;
+    console.log(mouseDown.current);
+
+    if (mouseDown.current) {
+      let pointer = fabricCanvas.getViewportPoint(e);
+      line.path[1][1] = pointer.x;
+      line.path[1][2] = pointer.y;
+      line.setCoords();
+
+      if (shapeType==='single-arrow' || shapeType==='double-arrow'){
+        arrowHead1.left = pointer.x;
+        arrowHead1.top = pointer.y;
+        let startPointX = line.path[0][1];
+        let startPointY = line.path[0][2];
+        let width = Math.abs(pointer.x - line.path[0][1]);
+        let height = Math.abs(pointer.y - line.path[0][2]);
+        let ratio = height / width;
+        let angle = ((Math.atan(ratio) / Math.PI) * 180 );
+
+        if (shapeType === 'single-arrow'){
+          if (arrowHead1.left >= startPointX) {
+            if (arrowHead1.top <= startPointY) {
+              arrowHead1.angle = 360 - angle;
+            } else if (arrowHead1.top > startPointY) {
+              arrowHead1.angle = angle;
+            }
+          } else {
+            if (arrowHead1.top <= startPointY) {
+              arrowHead1.angle = 180 + angle;
+            } else if (arrowHead1.top > startPointY) {
+              arrowHead1.angle = 180 - angle;
+            }
+          };
+          arrowHead1.setCoords();
+        } else if (shapeType === 'double-arrow'){
+          if (arrowHead1.left >= arrowHead2.left) {
+            if (arrowHead1.top <= arrowHead2.top) {
+              arrowHead1.angle = 360 - angle;
+              arrowHead2.angle = 360 - angle + 180;
+            } else if (arrowHead1.top > arrowHead2.top) {
+              arrowHead1.angle = angle;
+              arrowHead2.angle = angle + 180;
+            }
+          } else {
+            if (arrowHead1.top <= arrowHead2.top) {
+              arrowHead1.angle = 180 + angle;
+              arrowHead2.angle = 360 + angle;
+            } else if (arrowHead1.top > arrowHead2.top) {
+              arrowHead1.angle = 180 - angle;
+              arrowHead2.angle = 360 - angle;
+            }
+            arrowHead1.setCoords();
+            arrowHead2.setCoords();
+          };
+        }
+      };
+      fabricCanvas.requestRenderAll();
+    }
+  };
+
+  function stopDrawingOnMouseUp(e) {
+    console.log("stop");
+    mouseDown.current = false;
+    const shapeType = shapeTypeRef.current;
+    let line = LineRef.current;
+    const arrowHead1 = ArrowHead1Ref.current;
+    const arrowHead2 = ArrowHead2Ref.current;
+    let updatedLinePath = line.path;
+    fabricCanvas.remove(line);
+    line = new Path(updatedLinePath, {
+      label: (shapeType === 'single-arrow' || shapeType === 'double-arrow') ? 'arrow-line' : '',
+      stroke: selectedColor,
+      strokeWidth: 3,
+      originX: 'center',
+      originY: 'center',
+      hasControls: true,
+      hasBorders: false,
+      objectCaching: false,
+    });
+    fabricCanvas.add(line);
+    LineRef.current = line;
+
+    if (shapeType==='single-arrow') {
+      fabricCanvas.bringObjectToFront(arrowHead1);
+      let objects = [];
+      fabricCanvas.getObjects().forEach(o => {
+        if (o.label === 'arrow-line') {
+          objects.push(o);
+        }
+      });
+      let singleArrow = new Group(objects, {
+        originX: 'center',
+        originY: 'center',
+        hasControls: false,
+        hasBorders: false,
+        objectCaching: false
+      })
+      fabricCanvas.add(singleArrow);
+      fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current)
+    } else if (shapeType==='double-arrow') {
+      fabricCanvas.bringObjectToFront(arrowHead2);
+      let objects = [];
+      fabricCanvas.getObjects().forEach(o => {
+        if (o.label === 'arrow-line') {
+          objects.push(o);
+        }
+      });
+      let doubleArrow = new Group(objects, {
+        originX: 'center',
+        originY: 'center',
+        hasControls: false,
+        hasBorders: false,
+        objectCaching: false
+      })
+      fabricCanvas.add(doubleArrow);
+      fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current, ArrowHead2Ref.current)
+    }
+
+    fabricCanvas.requestRenderAll();
+    fabricCanvas.off({
+      'mouse:down': addingShapeOnMouseDown,
+      'mouse:move': drawingShapeOnMouseMove,
+      'mouse:up': stopDrawingOnMouseUp
+    });
   };
 
   // Enhanced text editing with shape detection
@@ -325,10 +507,13 @@ export const WhiteboardCanvas = ({
   }, [selectedTool, fabricCanvas, selectedColor]);
 
   useEffect(() => {
-    if (["rectangle", "circle", "line", "arrow", "triangle"].includes(selectedTool)) {
+    if (!fabricCanvas) return;
+
+    if (["rectangle", "circle", "line", "single-arrow", "double-arrow", "triangle"].includes(selectedTool)) {
       addShape(selectedTool);
     } else if (selectedTool === "text") {
       addEditableText();
+    } else if (selectedTool === "select" || selectedTool === "hand") {
     }
   }, [selectedTool]);
 

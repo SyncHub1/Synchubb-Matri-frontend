@@ -13,7 +13,6 @@ type SizeControlsProps = {
 };
 
 export const SizeControls = ({selectedObject, handleHeightChange, handleWidthChange, handleDiameterChange, width, height, diameter }:SizeControlsProps) => {
-  console.log(selectedObject?.type)
   return (
     <div>
       {selectedObject?.type === 'rect' && (

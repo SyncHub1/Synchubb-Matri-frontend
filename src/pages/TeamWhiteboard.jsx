@@ -11,6 +11,7 @@ import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
 import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
+import { LayersList } from "@/components/whiteboard/LayersList";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
 
@@ -182,7 +183,7 @@ const TeamWhiteboard = () => {
 
     const handleObjectSelection = (object) => {
         if (!object) return;
-
+        console.log(object.id);
         setSelectedObject(object);
         if (object.type === 'rect') {
             setWidth(Math.round(object.width * object.scaleX));
@@ -545,7 +546,13 @@ const TeamWhiteboard = () => {
         {/* Collaborative Cursors */}
         <CollaboratorCursors collaborators={collaborators} />
       </div>
-
+       {/* Layers List */}
+      <div>
+        <LayersList 
+            fabricCanvas={fabricCanvas}
+        />
+       </div>
+        
       {/* Welcome Message - Center */}
       {fabricCanvas && fabricCanvas.getObjects().length === 0 && (
         <div className="absolute inset-0 top-16 lg:top-0 flex items-center justify-center pointer-events-none">

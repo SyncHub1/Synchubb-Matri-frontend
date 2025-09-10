@@ -176,6 +176,7 @@ export const WhiteboardCanvas = ({
     switch (shapeType) {
       case "rectangle":
         const rect = new Rect({
+          label: 'rectangle',
           left: centerX - 50,
           top: centerY - 50,
           fill: "transparent",
@@ -190,6 +191,7 @@ export const WhiteboardCanvas = ({
 
       case "circle":
         const circle = new Circle({
+          label: 'circle',
           left: centerX - 50,
           top: centerY - 50,
           fill: "transparent",
@@ -232,6 +234,7 @@ export const WhiteboardCanvas = ({
 
       case "triangle":
         const triangle = new Triangle({
+          label: 'triangle',
           left: centerX - 50,
           top: centerY - 50,
           fill: "transparent",
@@ -246,6 +249,7 @@ export const WhiteboardCanvas = ({
 
       case "text":
         const text = new Textbox("Type here...", {
+          label: 'text',
           left: centerX - 50,
           top: centerY - 25,
           fill: selectedColor,
@@ -267,6 +271,7 @@ export const WhiteboardCanvas = ({
     let pointer = fabricCanvas.getViewportPoint(e);
     let linePath = 'M' + pointer.x + ' ' + pointer.y + ' L ' + pointer.x + ' ' + pointer.y;
     const line = new Path(linePath, {
+      label: 'line',
       stroke: selectedColor,
       strokeWidth: 3,
       originX: 'center',
@@ -394,7 +399,7 @@ export const WhiteboardCanvas = ({
     let updatedLinePath = line.path;
     fabricCanvas.remove(line);
     line = new Path(updatedLinePath, {
-      label: (shapeType === 'single-arrow' || shapeType === 'double-arrow') ? 'arrow-line' : '',
+      label: (shapeType === 'single-arrow' || shapeType === 'double-arrow') ? 'arrow-line' : 'line',
       stroke: selectedColor,
       strokeWidth: 3,
       originX: 'center',
@@ -410,34 +415,36 @@ export const WhiteboardCanvas = ({
       fabricCanvas.bringObjectToFront(arrowHead1);
       let objects = [];
       fabricCanvas.getObjects().forEach(o => {
-        if (o.label === 'arrow-line') {
+        if ((o as any).label === 'arrow-line') {
           objects.push(o);
         }
       });
       let singleArrow = new Group(objects, {
+        label: 'single-arrow',
         originX: 'center',
         originY: 'center',
-        hasControls: false,
+        hasControls: true,
         hasBorders: false,
         objectCaching: false
-      })
+      } as any)
       fabricCanvas.add(singleArrow);
       fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current)
     } else if (shapeType==='double-arrow') {
       fabricCanvas.bringObjectToFront(arrowHead2);
       let objects = [];
       fabricCanvas.getObjects().forEach(o => {
-        if (o.label === 'arrow-line') {
+        if ((o as any).label === 'arrow-line') {
           objects.push(o);
         }
       });
       let doubleArrow = new Group(objects, {
+        label: 'double-arrow',
         originX: 'center',
         originY: 'center',
-        hasControls: false,
+        hasControls: true,
         hasBorders: false,
         objectCaching: false
-      })
+      } as any)
       fabricCanvas.add(doubleArrow);
       fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current, ArrowHead2Ref.current)
     }
@@ -466,6 +473,7 @@ export const WhiteboardCanvas = ({
     const textColor = isInsideShape ? '#ffffff' : selectedColor;
 
     const text = new IText('Type here...', {
+      label: 'text',
       left: x - 40,
       top: y - 10,
       fill: textColor,

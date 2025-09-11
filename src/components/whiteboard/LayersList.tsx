@@ -60,14 +60,10 @@ export const LayersList = ({fabricCanvas}: LayersListProps) => {
 
   const addIdToObject = (object) => {
     if (object.type==='path' && !object.label) {
-      const timestamp = new Date().getTime();
-      object.id = `pen_${timestamp}`;
+      object.id = `pen_${uuidv4()}`;
       object.label = 'pen'
-      console.log(object.id)
     } else if (object.label) {
-      const timestamp = new Date().getTime();
       object.id = `${object.label}_${uuidv4()}`;
-      console.log(object.id)
     }
   }
 

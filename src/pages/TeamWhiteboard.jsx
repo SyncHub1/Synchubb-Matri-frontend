@@ -25,7 +25,7 @@ const TeamWhiteboard = () => {
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [diameter, setDiameter] = useState("");
-  const [color, setColor] = useState("");  
+  const [strokeColor, setStrokeColor] = useState("#000");  
   const [fillColor, setFillColor] = useState("");
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -166,6 +166,7 @@ const TeamWhiteboard = () => {
         fabricCanvas.on("selection:cleared", (event) => {
             setSelectedObject(null);
             clearSettings();
+            setSelectedTool("select");
         });
         fabricCanvas.on("object:modified", (event) => {
             handleObjectSelection(event.target);
@@ -188,38 +189,41 @@ const TeamWhiteboard = () => {
         if (object.type === 'rect') {
             setWidth(Math.round(object.width * object.scaleX));
             setHeight(Math.round(object.height * object.scaleY));
-            setColor(object.stroke);
+            setStrokeColor(object.stroke);
+            setFillColor(object.fill);
             setDiameter("");
         } else if (object.type === 'circle'){
             setDiameter(Math.round(object.radius * 2 * object.scaleX));
-            setColor(object.stroke);
+            setStrokeColor(object.stroke);
+            setFillColor(object.fill);
             setWidth("");
             setHeight("");
         }  else if (object.type === 'line'){
-            setWidth(Math.round(object.width * object.scaleX));
-            setColor(object.stroke);
+            setWidth("");
+            setStrokeColor(object.stroke);
             setHeight("");
             setDiameter("");
         } else if (object.type === 'group'){
-            setWidth(Math.round(object.width * object.scaleX));
+            setWidth("");
             setFillColor(object.fill);
             setHeight("");
             setDiameter("");
         } else if (object.type === 'path'){
             setWidth("");
-            setColor(object.stroke);
+            setStrokeColor(object.stroke);
             setHeight("");
             setDiameter("");
         } else if (object.type === 'i-text'){
             setWidth("");
             setFillColor(object.fill);
-            setColor("");
+            setStrokeColor("");
             setHeight("");
             setDiameter("");
         } else if (object.type === "triangle") {
             setWidth(Math.round(object.width * object.scaleX));
             setHeight(Math.round(object.height * object.scaleY));
-            setColor(object.stroke); 
+            setStrokeColor(object.stroke); 
+            setFillColor(object.fill);
             setDiameter("");
 }
     };    
@@ -238,7 +242,8 @@ const TeamWhiteboard = () => {
   const clearSettings = () => {
         setWidth("");
         setHeight("");
-        setColor("");
+        setStrokeColor("#000");
+        setFillColor("");
         setDiameter("");
     };
   
@@ -289,26 +294,41 @@ const TeamWhiteboard = () => {
       }           
   };
 
-  const handleColorChange = (color) => {
+  const handleStrokeColorChange = (color) => {
       const value = color;
-      setColor(value);
+      setStrokeColor(value);
       if (selectedObject) {
           selectedObject.set({stroke: value});
           fabricCanvas.renderAll();
-      } else {
-        setSelectedColor(value);
       }
   };  
 
-  const handleFillColorChange = (color) => {
-      setFillColor(color);
+    const handleFillColorChange = (color) => {
+      const value = color;
+      setFillColor(value);
+      if (selectedObject) {
+          selectedObject.set({fill: value});
+          fabricCanvas.renderAll();
+      }
+  };  
+
+  const handleGroupnTextColorChange = (color) => {
+      setStrokeColor(color);
       if (selectedObject && selectedObject.type === 'group') {
-        const line = selectedObject.item(0);
-        const head = selectedObject.item(1);
-        line.set({ stroke: color });
-        head.set({ fill: color });     
+        if (selectedObject.label === 'single-arrow'){
+          const head = selectedObject.item(1);
+          const line = selectedObject.item(0);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+        } else if (selectedObject.label === 'double-arrow'){
+          const head = selectedObject.item(0);
+          const line = selectedObject.item(1);
+          const head2 = selectedObject.item(2);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+          head2.set({ fill: color });     
+        }
       } else {
-        setSelectedColor(color);
         selectedObject.set({fill: color});
       }
       fabricCanvas.renderAll();
@@ -471,10 +491,10 @@ const TeamWhiteboard = () => {
       </div>
 
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
-      {selectedTool !== "hand" && (
+      {selectedTool !== "hand" && selectedTool !== "select" &&(
         <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
           <SizeControls 
-            selectedObject={selectedObject}
+            selectedTool={selectedTool}
             handleWidthChange={handleWidthChange} 
             handleHeightChange={handleHeightChange} 
             handleDiameterChange={handleDiameterChange}
@@ -484,9 +504,11 @@ const TeamWhiteboard = () => {
           <ColorPicker
             selectedObject={selectedObject} 
             selectedColor={selectedColor}
-            handleColorChange={handleColorChange}
+            selectedTool={selectedTool}
+            handleStrokeColorChange={handleStrokeColorChange}
             handleFillColorChange={handleFillColorChange}
-            color={color}
+            handleGroupnTextColorChange={handleGroupnTextColorChange}
+            strokeColor={strokeColor}
             fillColor={fillColor}
           />
           <StrokeControls 
@@ -535,10 +557,12 @@ const TeamWhiteboard = () => {
       <div className="absolute inset-0 top-16 lg:top-0">
         <WhiteboardCanvas
           selectedTool={selectedTool}
-          selectedColor={selectedColor}
+          strokeColor={strokeColor}
+          fillColor={fillColor}
           brushSize={brushSize}
           zoom={zoom}
-          setSelectedColor={setSelectedColor}
+          setSelectedTool={setSelectedTool}
+          setStrokeColor={setStrokeColor}
           onCanvasReady={handleCanvasReady}
           onImageUpload={handleImageUpload}
         />

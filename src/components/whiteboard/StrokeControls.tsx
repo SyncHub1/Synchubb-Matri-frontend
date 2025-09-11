@@ -8,9 +8,10 @@ interface StrokeControlsProps {
 }
 
 export const StrokeControls = ({ selectedTool, brushSize, setBrushSize }: StrokeControlsProps) => {
+  const strokeControlObjs = ['rectangle', 'triangle', 'circle', 'pen'];
   return (
     <div>
-    {(selectedTool !== 'single-arrow' && selectedTool !== 'double-arrow' && selectedTool !== 'line') && (
+    {(strokeControlObjs.includes(selectedTool)) && (
     <div className="bg-background border border-border rounded-lg shadow-lg p-3 min-w-[200px]">
       <div className="space-y-3">
         <div className="flex items-center justify-between">

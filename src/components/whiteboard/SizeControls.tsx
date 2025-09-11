@@ -1,9 +1,8 @@
-import { FabricObject } from "fabric";
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 
 type SizeControlsProps = {
-  selectedObject: FabricObject | null;
+  selectedTool: string;
   handleHeightChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleWidthChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDiameterChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -12,10 +11,10 @@ type SizeControlsProps = {
   diameter: number;
 };
 
-export const SizeControls = ({selectedObject, handleHeightChange, handleWidthChange, handleDiameterChange, width, height, diameter }:SizeControlsProps) => {
+export const SizeControls = ({selectedTool, handleHeightChange, handleWidthChange, handleDiameterChange, width, height, diameter }:SizeControlsProps) => {
   return (
     <div>
-      {selectedObject?.type === 'rect' && (
+      {selectedTool === 'rectangle' && (
         <div> 
           <div>
             <Label>Width:</Label>
@@ -27,7 +26,7 @@ export const SizeControls = ({selectedObject, handleHeightChange, handleWidthCha
           </div>
         </div>
       )}
-      {selectedObject?.type === 'circle' && (
+      {selectedTool === 'circle' && (
             <div>
                 <div>
                     <Label>Diameter:</Label>
@@ -35,7 +34,7 @@ export const SizeControls = ({selectedObject, handleHeightChange, handleWidthCha
                 </div>
             </div>
         )}
-        {selectedObject?.type === 'triangle' && (
+        {selectedTool === 'triangle' && (
         <div> 
           <div>
             <Label>Width:</Label>

@@ -4,20 +4,24 @@ import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
   selectedTool: string;
-  selectedColor: string;
+  strokeColor: string;
+  fillColor: string;
   brushSize: number;
   zoom: number;
-  setSelectedColor: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedTool: React.Dispatch<React.SetStateAction<string>>;
+  setStrokeColor: React.Dispatch<React.SetStateAction<string>>;
   onCanvasReady: (canvas: FabricCanvas) => void;
   onImageUpload?: (file: File) => void;
 }
 
 export const WhiteboardCanvas = ({ 
   selectedTool, 
-  selectedColor, 
+  strokeColor, 
+  fillColor,
   brushSize, 
   zoom,
-  setSelectedColor,
+  setSelectedTool,
+  setStrokeColor,
   onCanvasReady,
   onImageUpload 
 }: WhiteboardCanvasProps) => {
@@ -39,7 +43,7 @@ export const WhiteboardCanvas = ({
     });
 
     canvas.freeDrawingBrush = new PencilBrush(canvas);
-    canvas.freeDrawingBrush.color = selectedColor;
+    canvas.freeDrawingBrush.color = strokeColor;
     canvas.freeDrawingBrush.width = brushSize;
 
     // Enable multiple selection with enhanced configuration
@@ -131,7 +135,7 @@ export const WhiteboardCanvas = ({
     } else if (selectedTool === "pen") {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
-      fabricCanvas.freeDrawingBrush.color = selectedColor;
+      fabricCanvas.freeDrawingBrush.color = strokeColor;
       fabricCanvas.freeDrawingBrush.width = brushSize;
     } else if (selectedTool === "text") {
       fabricCanvas.isDrawingMode = false;
@@ -141,7 +145,7 @@ export const WhiteboardCanvas = ({
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
     }
-  }, [selectedTool, selectedColor, brushSize, fabricCanvas]);
+  }, [selectedTool, strokeColor, brushSize, fabricCanvas]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
@@ -179,10 +183,10 @@ export const WhiteboardCanvas = ({
           label: 'rectangle',
           left: centerX - 50,
           top: centerY - 50,
-          fill: "transparent",
+          fill: fillColor,
           width: 100,
           height: 100,
-          stroke: selectedColor,
+          stroke: strokeColor,
           strokeWidth: brushSize
         });
         fabricCanvas.add(rect);
@@ -194,9 +198,9 @@ export const WhiteboardCanvas = ({
           label: 'circle',
           left: centerX - 50,
           top: centerY - 50,
-          fill: "transparent",
+          fill: fillColor,
           radius: 50,
-          stroke: selectedColor,
+          stroke: strokeColor,
           strokeWidth: brushSize
         });
         fabricCanvas.add(circle);
@@ -237,10 +241,10 @@ export const WhiteboardCanvas = ({
           label: 'triangle',
           left: centerX - 50,
           top: centerY - 50,
-          fill: "transparent",
+          fill: fillColor,
           width: 100,
           height: 100,
-          stroke: selectedColor,
+          stroke: strokeColor,
           strokeWidth: brushSize
         });
         fabricCanvas.add(triangle);
@@ -252,7 +256,7 @@ export const WhiteboardCanvas = ({
           label: 'text',
           left: centerX - 50,
           top: centerY - 25,
-          fill: selectedColor,
+          fill: fillColor,
           fontSize: 20,
           fontFamily: "Arial"
         });
@@ -261,7 +265,7 @@ export const WhiteboardCanvas = ({
         break;
     }
     fabricCanvas.renderAll();
-    setSelectedColor("#000");
+    setStrokeColor("#000");
   };
 
   function addingShapeOnMouseDown(e) {
@@ -272,7 +276,7 @@ export const WhiteboardCanvas = ({
     let linePath = 'M' + pointer.x + ' ' + pointer.y + ' L ' + pointer.x + ' ' + pointer.y;
     const line = new Path(linePath, {
       label: 'line',
-      stroke: selectedColor,
+      stroke: strokeColor,
       strokeWidth: 3,
       originX: 'center',
       originY: 'center',
@@ -288,8 +292,8 @@ export const WhiteboardCanvas = ({
     if (shapeType === 'single-arrow' || shapeType === 'double-arrow'){
       const arrowHead1 = new Path(arrowHeadPath, {
         label: 'arrow-line',
-        fill: selectedColor,
-        stroke: selectedColor,
+        fill: strokeColor,
+        stroke: strokeColor,
         strokeWidth: 0,
         originX: 'center',
         originY: 'center',
@@ -306,8 +310,8 @@ export const WhiteboardCanvas = ({
     if (shapeType === 'double-arrow'){
       const arrowHead2 = new Path(arrowHeadPath, {
         label: 'arrow-line',
-        fill: selectedColor,
-        stroke: selectedColor,
+        fill: strokeColor,
+        stroke: strokeColor,
         strokeWidth: 0,
         originX: 'center',
         originY: 'center',
@@ -400,7 +404,7 @@ export const WhiteboardCanvas = ({
     fabricCanvas.remove(line);
     line = new Path(updatedLinePath, {
       label: (shapeType === 'single-arrow' || shapeType === 'double-arrow') ? 'arrow-line' : 'line',
-      stroke: selectedColor,
+      stroke: strokeColor,
       strokeWidth: 3,
       originX: 'center',
       originY: 'center',
@@ -409,6 +413,7 @@ export const WhiteboardCanvas = ({
       objectCaching: false,
     });
     fabricCanvas.add(line);
+    fabricCanvas.setActiveObject(line);
     LineRef.current = line;
 
     if (shapeType==='single-arrow') {
@@ -428,6 +433,7 @@ export const WhiteboardCanvas = ({
         objectCaching: false
       } as any)
       fabricCanvas.add(singleArrow);
+      fabricCanvas.setActiveObject(singleArrow);
       fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current)
     } else if (shapeType==='double-arrow') {
       fabricCanvas.bringObjectToFront(arrowHead2);
@@ -446,6 +452,7 @@ export const WhiteboardCanvas = ({
         objectCaching: false
       } as any)
       fabricCanvas.add(doubleArrow);
+      fabricCanvas.setActiveObject(doubleArrow);
       fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current, ArrowHead2Ref.current)
     }
 
@@ -470,7 +477,7 @@ export const WhiteboardCanvas = ({
     });
 
     const isInsideShape = objectsAtPoint.length > 0;
-    const textColor = isInsideShape ? '#ffffff' : selectedColor;
+    const textColor = isInsideShape ? '#ffffff' : strokeColor;
 
     const text = new IText('Type here...', {
       label: 'text',
@@ -512,7 +519,7 @@ export const WhiteboardCanvas = ({
     return () => {
       fabricCanvas.off('mouse:down', handleCanvasClick);
     };
-  }, [selectedTool, fabricCanvas, selectedColor]);
+  }, [selectedTool, fabricCanvas, strokeColor]);
 
   useEffect(() => {
     if (!fabricCanvas) return;

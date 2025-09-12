@@ -8,6 +8,7 @@ interface WhiteboardCanvasProps {
   fillColor: string;
   brushSize: number;
   zoom: number;
+  fontSize: number;
   setSelectedTool: React.Dispatch<React.SetStateAction<string>>;
   setStrokeColor: React.Dispatch<React.SetStateAction<string>>;
   onCanvasReady: (canvas: FabricCanvas) => void;
@@ -20,6 +21,7 @@ export const WhiteboardCanvas = ({
   fillColor,
   brushSize, 
   zoom,
+  fontSize,
   setSelectedTool,
   setStrokeColor,
   onCanvasReady,
@@ -484,7 +486,7 @@ export const WhiteboardCanvas = ({
       left: x - 40,
       top: y - 10,
       fill: textColor,
-      fontSize: 16,
+      fontSize: fontSize,
       fontFamily: 'Arial',
       editable: true,
       backgroundColor: isInsideShape ? 'rgba(0,0,0,0.5)' : 'transparent',
@@ -526,10 +528,7 @@ export const WhiteboardCanvas = ({
 
     if (["rectangle", "circle", "line", "single-arrow", "double-arrow", "triangle"].includes(selectedTool)) {
       addShape(selectedTool);
-    } else if (selectedTool === "text") {
-      addEditableText();
-    } else if (selectedTool === "select" || selectedTool === "hand") {
-    }
+    } 
   }, [selectedTool]);
 
   // Expose image upload function

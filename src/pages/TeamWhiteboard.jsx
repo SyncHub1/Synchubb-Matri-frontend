@@ -7,6 +7,7 @@ import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { ColorPicker } from "@/components/whiteboard/ColorPicker";
 import { StrokeControls } from "@/components/whiteboard/StrokeControls";
 import { SizeControls } from "@/components/whiteboard/SizeControls"
+import { FontControls } from "@/components/whiteboard/FontControls"
 import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
@@ -27,6 +28,7 @@ const TeamWhiteboard = () => {
   const [diameter, setDiameter] = useState("");
   const [strokeColor, setStrokeColor] = useState("#000");  
   const [fillColor, setFillColor] = useState("");
+  const [fontSize, setFontSize] = useState(28);
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   
@@ -216,7 +218,7 @@ const TeamWhiteboard = () => {
         } else if (object.type === 'i-text'){
             setWidth("");
             setFillColor(object.fill);
-            setStrokeColor("");
+            setStrokeColor(object.stroke);
             setHeight("");
             setDiameter("");
         } else if (object.type === "triangle") {
@@ -255,6 +257,16 @@ const TeamWhiteboard = () => {
     const value = e.target.value;
     setBrushSize(value)
     fabricCanvas.renderAll();
+  }
+
+  const handleFontSizeChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setFontSize(IntValue);
+    if (selectedObject) {
+      selectedObject.set({fontSize: IntValue});
+      fabricCanvas.requestRenderAll();
+    }
   }
 
   const handleWidthChange = (e) => {
@@ -491,9 +503,10 @@ const TeamWhiteboard = () => {
       </div>
 
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
-      {selectedTool !== "hand" && selectedTool !== "select" &&(
+      {(selectedTool !== "hand" && selectedObject !== null) && (
         <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
           <SizeControls 
+            selectedObject={selectedObject}
             selectedTool={selectedTool}
             handleWidthChange={handleWidthChange} 
             handleHeightChange={handleHeightChange} 
@@ -512,10 +525,17 @@ const TeamWhiteboard = () => {
             fillColor={fillColor}
           />
           <StrokeControls 
+            selectedObject={selectedObject}
             selectedTool={selectedTool}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
           />
+          <FontControls
+            selectedTool={selectedTool}
+            selectedObject={selectedObject}
+            fontSize={fontSize}
+            handleFontSizeChange={handleFontSizeChange}
+            />
         </div>
       )}
 
@@ -561,6 +581,7 @@ const TeamWhiteboard = () => {
           fillColor={fillColor}
           brushSize={brushSize}
           zoom={zoom}
+          fontSize={fontSize}
           setSelectedTool={setSelectedTool}
           setStrokeColor={setStrokeColor}
           onCanvasReady={handleCanvasReady}

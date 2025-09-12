@@ -7,6 +7,12 @@ import {
 import { FabricObject } from "fabric";
 import { Label } from "../ui/label";
 
+declare module "fabric" {
+  interface Object {
+    label?: string;
+  }
+}
+
 interface ColorPickerProps {
   selectedObject: FabricObject | null;
   strokeColor: string;
@@ -50,17 +56,17 @@ export const ColorPicker = ({
     "#C026D3",
     "#E11D48",
   ];
-  const fillStrokeColorObjs = ["rectangle", "triangle", "circle"];
+  const fillStrokeColorObjs = ["rectangle", "triangle", "pen","circle"];
   const strokeColorObjs = [
     "line",
     "single-arrow",
     "double-arrow",
-    "pen",
+    
     "text",
   ];
   return (
     <div>
-      {fillStrokeColorObjs.includes(selectedTool) && (
+      {(fillStrokeColorObjs.includes(selectedTool) || fillStrokeColorObjs.includes(selectedObject?.label)) && (
         <div className="p-2 space-y-2">
           <div className="flex flex-col gap-2">
             <Label>Stroke:</Label>
@@ -140,7 +146,7 @@ export const ColorPicker = ({
           </div>
         </div>
       )}
-      {strokeColorObjs.includes(selectedTool) && (
+      {(strokeColorObjs.includes(selectedTool) || strokeColorObjs.includes(selectedObject?.label)) && (
         <div className="flex flex-col gap-2 p-2">
           <Label>Stroke:</Label>
           <Popover>

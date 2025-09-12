@@ -1,5 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, PencilBrush, Line, Triangle, Textbox, FabricImage, IText, ActiveSelection, Group, Path } from "fabric";
+import {
+  Canvas as FabricCanvas,
+  Circle,
+  Rect,
+  PencilBrush,
+  Line,
+  Triangle,
+  Textbox,
+  FabricImage,
+  IText,
+  ActiveSelection,
+  Group,
+  Path,
+  Point,
+} from "fabric";
 import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
@@ -15,17 +29,17 @@ interface WhiteboardCanvasProps {
   onImageUpload?: (file: File) => void;
 }
 
-export const WhiteboardCanvas = ({ 
-  selectedTool, 
-  strokeColor, 
+export const WhiteboardCanvas = ({
+  selectedTool,
+  strokeColor,
   fillColor,
-  brushSize, 
+  brushSize,
   zoom,
   fontSize,
   setSelectedTool,
   setStrokeColor,
   onCanvasReady,
-  onImageUpload 
+  onImageUpload,
 }: WhiteboardCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -34,6 +48,12 @@ export const WhiteboardCanvas = ({
   const ArrowHead2Ref = useRef(null);
   const mouseDown = useRef(false);
   const shapeTypeRef = useRef<string>("");
+  const isPanning = useRef(false);
+  const panningHandlers = useRef<{
+    panningMouseDown: ((opt: any) => void) | null;
+    panningMouseMove: ((opt: any) => void) | null;
+    panningMouseUp: (() => void) | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -51,13 +71,13 @@ export const WhiteboardCanvas = ({
     // Enable multiple selection with enhanced configuration
     canvas.selection = true;
     canvas.preserveObjectStacking = true;
-    canvas.selectionColor = 'rgba(100, 100, 255, 0.1)';
-    canvas.selectionBorderColor = 'rgba(100, 100, 255, 1)';
+    canvas.selectionColor = "rgba(100, 100, 255, 0.1)";
+    canvas.selectionBorderColor = "rgba(100, 100, 255, 1)";
     canvas.selectionLineWidth = 2;
     canvas.selectionDashArray = [5, 5];
 
     // Enable multi-selection with Ctrl/Cmd + click
-    canvas.on('mouse:down', (e) => {
+    canvas.on("mouse:down", (e) => {
       if (e.e.ctrlKey || e.e.metaKey) {
         const activeObjects = canvas.getActiveObjects();
         if (e.target && !activeObjects.includes(e.target)) {
@@ -74,7 +94,7 @@ export const WhiteboardCanvas = ({
     });
 
     // Group/ungroup functionality
-    canvas.on('object:modified', () => {
+    canvas.on("object:modified", () => {
       canvas.renderAll();
     });
 
@@ -100,16 +120,19 @@ export const WhiteboardCanvas = ({
           const canvasHeight = fabricCanvas.getHeight();
           const maxWidth = canvasWidth * 0.3;
           const maxHeight = canvasHeight * 0.3;
-          
-          const scale = Math.min(maxWidth / img.width!, maxHeight / img.height!);
-          
+
+          const scale = Math.min(
+            maxWidth / img.width!,
+            maxHeight / img.height!
+          );
+
           img.set({
             left: canvasWidth / 2 - (img.width! * scale) / 2,
             top: canvasHeight / 2 - (img.height! * scale) / 2,
             scaleX: scale,
             scaleY: scale,
           });
-          
+
           fabricCanvas.add(img);
           fabricCanvas.setActiveObject(img);
           fabricCanvas.renderAll();
@@ -134,6 +157,9 @@ export const WhiteboardCanvas = ({
       fabricCanvas.selection = false;
       fabricCanvas.defaultCursor = "grab";
       fabricCanvas.hoverCursor = "grab";
+      fabricCanvas.selection = false;
+
+      activatePanning();
     } else if (selectedTool === "pen") {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
@@ -147,15 +173,65 @@ export const WhiteboardCanvas = ({
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
     }
+
+    if (selectedTool!=='hand'){
+      deactivatePanning();
+    }
   }, [selectedTool, strokeColor, brushSize, fabricCanvas]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
-    
+
     const zoomLevel = zoom / 100;
     fabricCanvas.setZoom(zoomLevel);
     fabricCanvas.renderAll();
   }, [zoom, fabricCanvas]);
+
+  const activatePanning = () => {
+    const panningMouseDown = (opt: any) => {
+      isPanning.current = true;
+      fabricCanvas.setCursor("grabbing");
+    };
+
+    const panningMouseMove = (opt: any) => {
+      if (!isPanning.current) return;
+      const e = opt.e;
+      fabricCanvas.relativePan(new Point(e.movementX, e.movementY));
+    };
+
+    const panningMouseUp = () => {
+      isPanning.current = false;
+      fabricCanvas.setCursor("grab");
+    };
+
+    fabricCanvas.on("mouse:down", panningMouseDown);
+    fabricCanvas.on("mouse:move", panningMouseMove);
+    fabricCanvas.on("mouse:up", panningMouseUp);
+
+    panningHandlers.current = {
+      panningMouseDown,
+      panningMouseMove,
+      panningMouseUp,
+    };
+
+    fabricCanvas.defaultCursor = "grab";
+    fabricCanvas.hoverCursor = "grab";
+  };
+
+  const deactivatePanning = () => {
+    if (!panningHandlers.current) return;
+
+    const { panningMouseDown, panningMouseMove, panningMouseUp } =
+      panningHandlers.current;
+    fabricCanvas.off("mouse:down", panningMouseDown);
+    fabricCanvas.off("mouse:move", panningMouseMove);
+    fabricCanvas.off("mouse:up", panningMouseUp);
+
+    panningHandlers.current = null;
+
+    fabricCanvas.defaultCursor = "default";
+    fabricCanvas.hoverCursor = "move";
+  };
 
   // Handle canvas resize
   useEffect(() => {
@@ -163,14 +239,14 @@ export const WhiteboardCanvas = ({
       if (fabricCanvas && canvasRef.current) {
         fabricCanvas.setDimensions({
           width: window.innerWidth,
-          height: window.innerHeight
+          height: window.innerHeight,
         });
         fabricCanvas.renderAll();
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [fabricCanvas]);
 
   const addShape = (shapeType: string) => {
@@ -182,14 +258,14 @@ export const WhiteboardCanvas = ({
     switch (shapeType) {
       case "rectangle":
         const rect = new Rect({
-          label: 'rectangle',
+          label: "rectangle",
           left: centerX - 50,
           top: centerY - 50,
           fill: fillColor,
           width: 100,
           height: 100,
           stroke: strokeColor,
-          strokeWidth: brushSize
+          strokeWidth: brushSize,
         });
         fabricCanvas.add(rect);
         fabricCanvas.setActiveObject(rect);
@@ -197,13 +273,13 @@ export const WhiteboardCanvas = ({
 
       case "circle":
         const circle = new Circle({
-          label: 'circle',
+          label: "circle",
           left: centerX - 50,
           top: centerY - 50,
           fill: fillColor,
           radius: 50,
           stroke: strokeColor,
-          strokeWidth: brushSize
+          strokeWidth: brushSize,
         });
         fabricCanvas.add(circle);
         fabricCanvas.setActiveObject(circle);
@@ -212,42 +288,42 @@ export const WhiteboardCanvas = ({
       case "line":
         fabricCanvas.selection = false;
         fabricCanvas.on({
-          'mouse:down': addingShapeOnMouseDown,
-          'mouse:move': drawingShapeOnMouseMove,
-          'mouse:up': stopDrawingOnMouseUp
+          "mouse:down": addingShapeOnMouseDown,
+          "mouse:move": drawingShapeOnMouseMove,
+          "mouse:up": stopDrawingOnMouseUp,
         });
         break;
 
       case "single-arrow": {
         fabricCanvas.selection = false;
         fabricCanvas.on({
-          'mouse:down': addingShapeOnMouseDown,
-          'mouse:move': drawingShapeOnMouseMove,
-          'mouse:up': stopDrawingOnMouseUp
+          "mouse:down": addingShapeOnMouseDown,
+          "mouse:move": drawingShapeOnMouseMove,
+          "mouse:up": stopDrawingOnMouseUp,
         });
         break;
-      };
-        
+      }
+
       case "double-arrow": {
         fabricCanvas.selection = false;
         fabricCanvas.on({
-          'mouse:down': addingShapeOnMouseDown,
-          'mouse:move': drawingShapeOnMouseMove,
-          'mouse:up': stopDrawingOnMouseUp
+          "mouse:down": addingShapeOnMouseDown,
+          "mouse:move": drawingShapeOnMouseMove,
+          "mouse:up": stopDrawingOnMouseUp,
         });
         break;
       }
 
       case "triangle":
         const triangle = new Triangle({
-          label: 'triangle',
+          label: "triangle",
           left: centerX - 50,
           top: centerY - 50,
           fill: fillColor,
           width: 100,
           height: 100,
           stroke: strokeColor,
-          strokeWidth: brushSize
+          strokeWidth: brushSize,
         });
         fabricCanvas.add(triangle);
         fabricCanvas.setActiveObject(triangle);
@@ -255,12 +331,12 @@ export const WhiteboardCanvas = ({
 
       case "text":
         const text = new Textbox("Type here...", {
-          label: 'text',
+          label: "text",
           left: centerX - 50,
           top: centerY - 25,
           fill: fillColor,
           fontSize: 20,
-          fontFamily: "Arial"
+          fontFamily: "Arial",
         });
         fabricCanvas.add(text);
         fabricCanvas.setActiveObject(text);
@@ -275,60 +351,60 @@ export const WhiteboardCanvas = ({
     const shapeType = shapeTypeRef.current;
     mouseDown.current = true;
     let pointer = fabricCanvas.getViewportPoint(e);
-    let linePath = 'M' + pointer.x + ' ' + pointer.y + ' L ' + pointer.x + ' ' + pointer.y;
+    let linePath =
+      "M" + pointer.x + " " + pointer.y + " L " + pointer.x + " " + pointer.y;
     const line = new Path(linePath, {
-      label: 'line',
+      label: "line",
       stroke: strokeColor,
       strokeWidth: 3,
-      originX: 'center',
-      originY: 'center',
+      originX: "center",
+      originY: "center",
       hasControls: false,
       hasBorders: false,
-      objectCaching: false
+      objectCaching: false,
     });
     fabricCanvas.add(line);
     LineRef.current = line;
 
-    let arrowHeadPath = 'M 0 0 L 20 10 L 0 20 Z';
+    let arrowHeadPath = "M 0 0 L 20 10 L 0 20 Z";
 
-    if (shapeType === 'single-arrow' || shapeType === 'double-arrow'){
+    if (shapeType === "single-arrow" || shapeType === "double-arrow") {
       const arrowHead1 = new Path(arrowHeadPath, {
-        label: 'arrow-line',
+        label: "arrow-line",
         fill: strokeColor,
         stroke: strokeColor,
         strokeWidth: 0,
-        originX: 'center',
-        originY: 'center',
-        hasBorders: false,
-        hasControls: false,
-        top: pointer.y,
-        left: pointer.x
-      });
-      fabricCanvas.add(arrowHead1)
-      ArrowHead1Ref.current = arrowHead1;
-    ;
-    }
-
-    if (shapeType === 'double-arrow'){
-      const arrowHead2 = new Path(arrowHeadPath, {
-        label: 'arrow-line',
-        fill: strokeColor,
-        stroke: strokeColor,
-        strokeWidth: 0,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         hasBorders: false,
         hasControls: false,
         top: pointer.y,
         left: pointer.x,
-        angle: 180
+      });
+      fabricCanvas.add(arrowHead1);
+      ArrowHead1Ref.current = arrowHead1;
+    }
+
+    if (shapeType === "double-arrow") {
+      const arrowHead2 = new Path(arrowHeadPath, {
+        label: "arrow-line",
+        fill: strokeColor,
+        stroke: strokeColor,
+        strokeWidth: 0,
+        originX: "center",
+        originY: "center",
+        hasBorders: false,
+        hasControls: false,
+        top: pointer.y,
+        left: pointer.x,
+        angle: 180,
       });
       fabricCanvas.add(arrowHead2);
       ArrowHead2Ref.current = arrowHead2;
     }
     fabricCanvas.requestRenderAll();
     console.log(pointer);
-  };
+  }
 
   function drawingShapeOnMouseMove(e) {
     console.log("draw");
@@ -344,7 +420,7 @@ export const WhiteboardCanvas = ({
       line.path[1][2] = pointer.y;
       line.setCoords();
 
-      if (shapeType==='single-arrow' || shapeType==='double-arrow'){
+      if (shapeType === "single-arrow" || shapeType === "double-arrow") {
         arrowHead1.left = pointer.x;
         arrowHead1.top = pointer.y;
         let startPointX = line.path[0][1];
@@ -352,9 +428,9 @@ export const WhiteboardCanvas = ({
         let width = Math.abs(pointer.x - line.path[0][1]);
         let height = Math.abs(pointer.y - line.path[0][2]);
         let ratio = height / width;
-        let angle = ((Math.atan(ratio) / Math.PI) * 180 );
+        let angle = (Math.atan(ratio) / Math.PI) * 180;
 
-        if (shapeType === 'single-arrow'){
+        if (shapeType === "single-arrow") {
           if (arrowHead1.left >= startPointX) {
             if (arrowHead1.top <= startPointY) {
               arrowHead1.angle = 360 - angle;
@@ -367,9 +443,9 @@ export const WhiteboardCanvas = ({
             } else if (arrowHead1.top > startPointY) {
               arrowHead1.angle = 180 - angle;
             }
-          };
+          }
           arrowHead1.setCoords();
-        } else if (shapeType === 'double-arrow'){
+        } else if (shapeType === "double-arrow") {
           if (arrowHead1.left >= arrowHead2.left) {
             if (arrowHead1.top <= arrowHead2.top) {
               arrowHead1.angle = 360 - angle;
@@ -388,12 +464,12 @@ export const WhiteboardCanvas = ({
             }
             arrowHead1.setCoords();
             arrowHead2.setCoords();
-          };
+          }
         }
-      };
+      }
       fabricCanvas.requestRenderAll();
     }
-  };
+  }
 
   function stopDrawingOnMouseUp(e) {
     console.log("stop");
@@ -405,11 +481,14 @@ export const WhiteboardCanvas = ({
     let updatedLinePath = line.path;
     fabricCanvas.remove(line);
     line = new Path(updatedLinePath, {
-      label: (shapeType === 'single-arrow' || shapeType === 'double-arrow') ? 'arrow-line' : 'line',
+      label:
+        shapeType === "single-arrow" || shapeType === "double-arrow"
+          ? "arrow-line"
+          : "line",
       stroke: strokeColor,
       strokeWidth: 3,
-      originX: 'center',
-      originY: 'center',
+      originX: "center",
+      originY: "center",
       hasControls: true,
       hasBorders: false,
       objectCaching: false,
@@ -418,78 +497,89 @@ export const WhiteboardCanvas = ({
     fabricCanvas.setActiveObject(line);
     LineRef.current = line;
 
-    if (shapeType==='single-arrow') {
+    if (shapeType === "single-arrow") {
       fabricCanvas.bringObjectToFront(arrowHead1);
       let objects = [];
-      fabricCanvas.getObjects().forEach(o => {
-        if ((o as any).label === 'arrow-line') {
+      fabricCanvas.getObjects().forEach((o) => {
+        if ((o as any).label === "arrow-line") {
           objects.push(o);
         }
       });
       let singleArrow = new Group(objects, {
-        label: 'single-arrow',
-        originX: 'center',
-        originY: 'center',
+        label: "single-arrow",
+        originX: "center",
+        originY: "center",
         hasControls: true,
         hasBorders: false,
-        objectCaching: false
-      } as any)
+        objectCaching: false,
+      } as any);
       fabricCanvas.add(singleArrow);
       fabricCanvas.setActiveObject(singleArrow);
-      fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current)
-    } else if (shapeType==='double-arrow') {
+      fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current);
+    } else if (shapeType === "double-arrow") {
       fabricCanvas.bringObjectToFront(arrowHead2);
       let objects = [];
-      fabricCanvas.getObjects().forEach(o => {
-        if ((o as any).label === 'arrow-line') {
+      fabricCanvas.getObjects().forEach((o) => {
+        if ((o as any).label === "arrow-line") {
           objects.push(o);
         }
       });
       let doubleArrow = new Group(objects, {
-        label: 'double-arrow',
-        originX: 'center',
-        originY: 'center',
+        label: "double-arrow",
+        originX: "center",
+        originY: "center",
         hasControls: true,
         hasBorders: false,
-        objectCaching: false
-      } as any)
+        objectCaching: false,
+      } as any);
       fabricCanvas.add(doubleArrow);
       fabricCanvas.setActiveObject(doubleArrow);
-      fabricCanvas.remove(LineRef.current, ArrowHead1Ref.current, ArrowHead2Ref.current)
+      fabricCanvas.remove(
+        LineRef.current,
+        ArrowHead1Ref.current,
+        ArrowHead2Ref.current
+      );
     }
 
     fabricCanvas.requestRenderAll();
     fabricCanvas.off({
-      'mouse:down': addingShapeOnMouseDown,
-      'mouse:move': drawingShapeOnMouseMove,
-      'mouse:up': stopDrawingOnMouseUp
+      "mouse:down": addingShapeOnMouseDown,
+      "mouse:move": drawingShapeOnMouseMove,
+      "mouse:up": stopDrawingOnMouseUp,
     });
-  };
+  }
 
   // Enhanced text editing with shape detection
-  const addEditableText = (x: number = fabricCanvas?.getWidth() / 2, y: number = fabricCanvas?.getHeight() / 2) => {
+  const addEditableText = (
+    x: number = fabricCanvas?.getWidth() / 2,
+    y: number = fabricCanvas?.getHeight() / 2
+  ) => {
     if (!fabricCanvas) return;
 
     // Check if clicking inside a shape
-    const objectsAtPoint = fabricCanvas.getObjects().filter(obj => {
-      if (obj.type === 'textbox' || obj.type === 'i-text') return false;
+    const objectsAtPoint = fabricCanvas.getObjects().filter((obj) => {
+      if (obj.type === "textbox" || obj.type === "i-text") return false;
       const objBounds = obj.getBoundingRect();
-      return x >= objBounds.left && x <= objBounds.left + objBounds.width &&
-             y >= objBounds.top && y <= objBounds.top + objBounds.height;
+      return (
+        x >= objBounds.left &&
+        x <= objBounds.left + objBounds.width &&
+        y >= objBounds.top &&
+        y <= objBounds.top + objBounds.height
+      );
     });
 
     const isInsideShape = objectsAtPoint.length > 0;
-    const textColor = isInsideShape ? '#ffffff' : strokeColor;
+    const textColor = isInsideShape ? "#ffffff" : strokeColor;
 
-    const text = new IText('Type here...', {
-      label: 'text',
+    const text = new IText("Type here...", {
+      label: "text",
       left: x - 40,
       top: y - 10,
       fill: textColor,
       fontSize: fontSize,
-      fontFamily: 'Arial',
+      fontFamily: "Arial",
       editable: true,
-      backgroundColor: isInsideShape ? 'rgba(0,0,0,0.5)' : 'transparent',
+      backgroundColor: isInsideShape ? "rgba(0,0,0,0.5)" : "transparent",
       padding: isInsideShape ? 4 : 0,
     });
 
@@ -497,7 +587,7 @@ export const WhiteboardCanvas = ({
     fabricCanvas.setActiveObject(text);
     text.enterEditing();
     fabricCanvas.renderAll();
-    
+
     if (isInsideShape) {
       toast("Text added inside shape! Click outside to finish editing.");
     }
@@ -515,20 +605,29 @@ export const WhiteboardCanvas = ({
     };
 
     if (selectedTool === "text") {
-      fabricCanvas.on('mouse:down', handleCanvasClick);
+      fabricCanvas.on("mouse:down", handleCanvasClick);
     }
 
     return () => {
-      fabricCanvas.off('mouse:down', handleCanvasClick);
+      fabricCanvas.off("mouse:down", handleCanvasClick);
     };
   }, [selectedTool, fabricCanvas, strokeColor]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
 
-    if (["rectangle", "circle", "line", "single-arrow", "double-arrow", "triangle"].includes(selectedTool)) {
+    if (
+      [
+        "rectangle",
+        "circle",
+        "line",
+        "single-arrow",
+        "double-arrow",
+        "triangle",
+      ].includes(selectedTool)
+    ) {
       addShape(selectedTool);
-    } 
+    }
   }, [selectedTool]);
 
   // Expose image upload function
@@ -541,10 +640,7 @@ export const WhiteboardCanvas = ({
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full cursor-crosshair"
-      />
+      <canvas ref={canvasRef} className="w-full h-full cursor-crosshair" />
     </div>
   );
 };

@@ -86,21 +86,21 @@ export const Toolbar = ({
       id: "double-arrow",
       icon: MoveHorizontal,
       label: "Double Arrow",
-      shortcut: "6",
+      shortcut: "7",
       action: () => onToolSelect("double-arrow"),
     },
     {
       id: "line",
       icon: Minus,
       label: "Line",
-      shortcut: "7",
+      shortcut: "8",
       action: () => onToolSelect("line"),
     },
     {
       id: "pen",
       icon: Pen,
       label: "Draw",
-      shortcut: "8",
+      shortcut: "9",
       action: () => onToolSelect("pen"),
     },
     {
@@ -121,14 +121,13 @@ export const Toolbar = ({
       id: "text",
       icon: Type,
       label: "Text",
-      shortcut: "9",
+      shortcut: "0",
       action: () => onToolSelect("text"),
     },
     {
       id: "eraser",
       icon: Eraser,
       label: "Eraser",
-      shortcut: "0",
       action: () => onToolSelect("eraser"),
     },
   ];
@@ -150,7 +149,7 @@ export const Toolbar = ({
           >
             <tool.icon className="h-4 w-4" />
             <span className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 text-xs bg-popover text-popover-foreground border border-border rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md z-50">
-              {tool.label} ({tool.shortcut})
+              {tool.label} {tool.shortcut ? `(${tool.shortcut})`: ""}
             </span>
           </Button>
           {/* Add separator after hand tool (index 1) */}

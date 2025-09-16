@@ -144,19 +144,21 @@ const TeamWhiteboard = () => {
 
       // Tool shortcuts
       const toolShortcuts = {
-        '1': 'select',
-        '2': 'hand', 
-        '3': 'rectangle',
-        '4': 'circle',
-        '5': 'arrow',
-        '6': 'line',
-        '7': 'pen',
-        '8': 'text'
+        1: "select",
+        2: "hand",
+        3: "rectangle",
+        4: "circle",
+        5: "triangle",
+        6: "single-arrow",
+        7: "double-arrow",
+        8: "line",
+        9: "pen",
+        0: "text",
       };
 
-      //if (toolShortcuts[e.key]) {
-        //setSelectedTool(toolShortcuts[e.key]);
-      //}
+      if (toolShortcuts[e.key]) {
+        setSelectedTool(toolShortcuts[e.key]);
+      }
     };
 
     if (fabricCanvas) {

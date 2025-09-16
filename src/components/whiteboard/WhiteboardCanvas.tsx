@@ -4,7 +4,6 @@ import {
   Circle,
   Rect,
   PencilBrush,
-  Line,
   Triangle,
   Textbox,
   FabricImage,
@@ -15,6 +14,7 @@ import {
   Point,
 } from "fabric";
 import { toast } from "sonner";
+import { EraserBrush, ClippingGroup } from "@erase2d/fabric";
 
 interface WhiteboardCanvasProps {
   selectedTool: string;
@@ -64,10 +64,6 @@ export const WhiteboardCanvas = ({
       backgroundColor: "transparent",
     });
 
-    canvas.freeDrawingBrush = new PencilBrush(canvas);
-    canvas.freeDrawingBrush.color = strokeColor;
-    canvas.freeDrawingBrush.width = brushSize;
-
     // Enable multiple selection with enhanced configuration
     canvas.selection = true;
     canvas.preserveObjectStacking = true;
@@ -91,6 +87,12 @@ export const WhiteboardCanvas = ({
           }
         }
       }
+    });
+
+    canvas.on("path:created", (e) => {
+      e.path.set({
+        erasable: true,
+      });
     });
 
     // Group/ungroup functionality
@@ -127,18 +129,31 @@ export const WhiteboardCanvas = ({
     } else if (selectedTool === "pen") {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
+      fabricCanvas.freeDrawingBrush = new PencilBrush(fabricCanvas);
       fabricCanvas.freeDrawingBrush.color = strokeColor;
       fabricCanvas.freeDrawingBrush.width = brushSize;
+      const penSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-icon lucide-pen"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>`
+      const penCursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(penSvg)}") 4 4, auto`;
+      fabricCanvas.freeDrawingCursor = penCursor;
+      fabricCanvas.hoverCursor = "move";
     } else if (selectedTool === "text") {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
       fabricCanvas.defaultCursor = "text";
+    } else if (selectedTool === "eraser") {
+      fabricCanvas.isDrawingMode = true;
+      fabricCanvas.selection = false;
+      fabricCanvas.freeDrawingBrush = new EraserBrush(fabricCanvas);
+      fabricCanvas.freeDrawingBrush.width = 30;
+      const eraserSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21"/><path d="m5.082 11.09 8.828 8.828"/></svg>`;
+      const eraserCursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(eraserSvg)}") 4 4, auto`;
+      fabricCanvas.freeDrawingCursor = eraserCursor;
     } else {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
     }
 
-    if (selectedTool!=='hand'){
+    if (selectedTool !== "hand") {
       deactivatePanning();
     }
   }, [selectedTool, strokeColor, brushSize, fabricCanvas]);

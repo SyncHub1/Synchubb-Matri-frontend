@@ -107,42 +107,6 @@ export const WhiteboardCanvas = ({
     };
   }, []);
 
-  // Image upload functionality
-  const addImageToCanvas = (file: File) => {
-    if (!fabricCanvas) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imgElement = new Image();
-      imgElement.onload = () => {
-        FabricImage.fromURL(event.target?.result as string).then((img) => {
-          const canvasWidth = fabricCanvas.getWidth();
-          const canvasHeight = fabricCanvas.getHeight();
-          const maxWidth = canvasWidth * 0.3;
-          const maxHeight = canvasHeight * 0.3;
-
-          const scale = Math.min(
-            maxWidth / img.width!,
-            maxHeight / img.height!
-          );
-
-          img.set({
-            left: canvasWidth / 2 - (img.width! * scale) / 2,
-            top: canvasHeight / 2 - (img.height! * scale) / 2,
-            scaleX: scale,
-            scaleY: scale,
-          });
-
-          fabricCanvas.add(img);
-          fabricCanvas.setActiveObject(img);
-          fabricCanvas.renderAll();
-        });
-      };
-      imgElement.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
-
   useEffect(() => {
     if (!fabricCanvas) return;
 
@@ -634,7 +598,7 @@ export const WhiteboardCanvas = ({
   useEffect(() => {
     if (onImageUpload && fabricCanvas) {
       // Store reference for external access
-      (window as any).addImageToWhiteboard = addImageToCanvas;
+      (window as any).addImageToWhiteboard = onImageUpload;
     }
   }, [fabricCanvas, onImageUpload]);
 

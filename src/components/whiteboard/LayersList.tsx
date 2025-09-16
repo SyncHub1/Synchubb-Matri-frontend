@@ -59,9 +59,13 @@ export const LayersList = ({fabricCanvas}: LayersListProps) => {
   }
 
   const addIdToObject = (object) => {
+    console.log(object.type);
     if (object.type==='path' && !object.label) {
       object.id = `pen_${uuidv4()}`;
       object.label = 'pen'
+    } else if (object.type==='image' && !object.label) {
+      object.id = `image_${uuidv4()}`;
+      object.label = 'image'
     } else if (object.label) {
       object.id = `${object.label}_${uuidv4()}`;
     }

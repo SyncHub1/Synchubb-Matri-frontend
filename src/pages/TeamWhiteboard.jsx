@@ -15,6 +15,7 @@ import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { LayersList } from "@/components/whiteboard/LayersList";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
+import { string } from "zod";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -372,14 +373,37 @@ const TeamWhiteboard = () => {
     toast.success("Canvas cleared!");
   };
 
-  const handleImageUpload = (file) => {
-    if (!fabricCanvas) return;
+  const uploadImageToCloudinary = async (file) => {
+    if (!file) return;
 
+    const data = new FormData();
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+    data.append("file", file);
+    data.append("upload_preset", uploadPreset)
+    data.append("cloud_name", cloudName)
+ 
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: data
+    });
+
+    const uploadRes = await res.json();
+    const uploadedImageUrl = uploadRes.url;
+    toast.success("Image uploaded successfully!");
+    return uploadedImageUrl;
+
+  }
+
+  const handleImageUpload = async (file) => {
+    if (!fabricCanvas) return;
+    const uploadedImageUrl = await uploadImageToCloudinary(file);
+    console.log(uploadedImageUrl);
     const reader = new FileReader();
     reader.onload = (event) => {
       const imgElement = new Image();
       imgElement.onload = () => {
-        FabricImage.fromURL(event.target.result).then((img) => {
+        FabricImage.fromURL(uploadedImageUrl).then((img) => {
           const canvasWidth = fabricCanvas.getWidth();
           const canvasHeight = fabricCanvas.getHeight();
           const maxWidth = canvasWidth * 0.3;
@@ -486,6 +510,7 @@ const TeamWhiteboard = () => {
           <Toolbar 
             selectedTool={selectedTool} 
             onToolSelect={setSelectedTool} 
+            onImageUpload={handleImageUpload}
           />
         </div>
       </div>

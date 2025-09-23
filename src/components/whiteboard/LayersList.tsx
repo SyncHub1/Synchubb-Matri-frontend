@@ -162,7 +162,7 @@ export const LayersList = ({fabricCanvas}: LayersListProps) => {
           <ArrowDownFromLine/>
         </Button>
       </div>
-      <ul className="flex flex-col gap-2 mt-5">
+      <ul className="text-foreground flex flex-col gap-2 mt-5">
         {layers?.map((layer) => (
           <li key={layer.id} onClick={() => selectLayerInCanvas(layer.id)} className={layer.id === selectedLayer ? "selected-layer": ""}>
             {layer.label} ({layer.zIndex})

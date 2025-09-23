@@ -12,11 +12,16 @@ import {
   Group,
   Path,
   Point,
+  FabricObject,
 } from "fabric";
 import { toast } from "sonner";
 import { EraserBrush, ClippingGroup } from "@erase2d/fabric";
+import { useTheme } from "next-themes";
 
 interface WhiteboardCanvasProps {
+  darkColors: string[],
+  lightColors: string[],
+  baseColors: string[],
   selectedTool: string;
   strokeColor: string;
   fillColor: string;
@@ -30,13 +35,15 @@ interface WhiteboardCanvasProps {
 }
 
 export const WhiteboardCanvas = ({
+  darkColors,
+  lightColors,
+  baseColors,
   selectedTool,
   strokeColor,
   fillColor,
   brushSize,
   zoom,
   fontSize,
-  setSelectedTool,
   setStrokeColor,
   onCanvasReady,
   onImageUpload,
@@ -54,7 +61,8 @@ export const WhiteboardCanvas = ({
     panningMouseMove: ((opt: any) => void) | null;
     panningMouseUp: (() => void) | null;
   } | null>(null);
-
+  const {theme, setTheme} = useTheme();
+  
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -63,6 +71,9 @@ export const WhiteboardCanvas = ({
       height: window.innerHeight,
       backgroundColor: "transparent",
     });
+    if (strokeColor==="") {
+      setStrokeColor(theme==="light"?"#000":"#fff");
+    }
 
     // Enable multiple selection with enhanced configuration
     canvas.selection = true;
@@ -130,7 +141,7 @@ export const WhiteboardCanvas = ({
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
       fabricCanvas.freeDrawingBrush = new PencilBrush(fabricCanvas);
-      fabricCanvas.freeDrawingBrush.color = strokeColor;
+      fabricCanvas.freeDrawingBrush.color = getStrokeColor(strokeColor, theme);
       fabricCanvas.freeDrawingBrush.width = brushSize;
       const penSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-icon lucide-pen"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>`
       const penCursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(penSvg)}") 4 4, auto`;
@@ -212,6 +223,110 @@ export const WhiteboardCanvas = ({
     fabricCanvas.hoverCursor = "move";
   };
 
+  useEffect(() => {
+    const objects = fabricCanvas
+      ?.getObjects()
+      .filter(
+        (obj) =>
+          !(
+            (obj as any).id.startsWith("vertical-") ||
+            (obj as any).id.startsWith("horizontal-") ||
+            (obj as any).id.startsWith("arrow-line")
+          )
+      );
+    
+    const updateObjColor = (obj, color) => {
+      if (obj.label === 'single-arrow'){
+          const head = obj.item(1);
+          const line = obj.item(0);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+        } else if (obj.label === 'double-arrow'){
+          const head = obj.item(0);
+          const line = obj.item(1);
+          const head2 = obj.item(2);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+          head2.set({ fill: color });     
+        } else if (obj.label === 'text'){
+            obj.set({fill: color});
+        } else {
+          obj.set({ stroke: color });
+        }
+    }
+
+    const updateFillColor = (obj, color) => {
+      obj.set({fill: color});
+    }
+
+    function findColor(obj: FabricObject): string[] {
+      if (!obj) return;
+      if ((obj as any).label === "text") {
+        return [obj.fill as string, null];
+      }
+
+      if (["rectangle", "triangle", "circle", "pen"].includes((obj as any).label)) {
+        if (obj.fill) {
+          return [obj.stroke as string, obj.fill as string];
+        } else {
+          return [obj.stroke as string, null ];
+        }
+      }
+      if ((obj as any).label === 'line') {
+        return [obj.stroke as string, null ];
+      }
+
+      if (obj.type === "group") {
+        let child;
+        if ((obj as any).label === "single-arrow"){
+          child = (obj as any).item(1);
+        } else if ((obj as any).label === "double-arrow"){
+          child = (obj as any).item(0);
+        }
+       return [child.fill, null as string];
+      }
+
+      return [null, null];
+    }
+
+  const fromStrokeColors = theme === "dark" ? darkColors : lightColors;
+  const toStrokeColors = theme === "dark" ? lightColors : darkColors;
+
+  const fromFillColors = theme === "dark" ? lightColors : darkColors;
+  const toFillColors = theme === "dark" ? darkColors : lightColors;
+
+  if (objects) {
+    objects.forEach((obj) => {
+      const [objStrokeColor, objFillColor] = findColor(obj);
+      console.log(objStrokeColor, objFillColor);
+
+      if (!objStrokeColor) return;
+      if (objStrokeColor === "#000" && theme === "dark") {
+        updateObjColor(obj, "#fff");
+      } else if (objStrokeColor === "#fff" && theme === "light") {
+        updateObjColor(obj, "#000");
+      } else {
+        const idx = fromStrokeColors.indexOf(objStrokeColor);
+        if (idx !== -1) {
+          updateObjColor(obj, toStrokeColors[idx]);
+        }
+      }
+
+      if (objFillColor && objFillColor === "#000" && theme === "dark") {
+        updateFillColor(obj, "#fff");
+      } else if (objFillColor && objFillColor === '#fff'&& theme === "light") {
+        updateFillColor(obj, "#000");
+      } else {
+        const idx = fromFillColors.indexOf(objFillColor);
+        if (idx !== -1) {
+          updateFillColor(obj, toFillColors[idx]);
+        }
+      }
+    });
+    fabricCanvas.requestRenderAll();
+  }
+  }, [theme]);
+
   // Handle canvas resize
   useEffect(() => {
     const handleResize = () => {
@@ -228,7 +343,16 @@ export const WhiteboardCanvas = ({
     return () => window.removeEventListener("resize", handleResize);
   }, [fabricCanvas]);
 
+    const getStrokeColor = (strokeColor: string, theme: string) => {
+    if (strokeColor && strokeColor.trim() !== "") {
+      return strokeColor;
+    }
+    return theme === "dark" ? "#fff" : "#000";
+  };
+
+
   const addShape = (shapeType: string) => {
+    console.log(strokeColor);
     shapeTypeRef.current = shapeType;
     if (!fabricCanvas) return;
     const centerX = fabricCanvas.width! / 2;
@@ -243,7 +367,7 @@ export const WhiteboardCanvas = ({
           fill: fillColor,
           width: 100,
           height: 100,
-          stroke: strokeColor,
+          stroke:  getStrokeColor(strokeColor, theme),
           strokeWidth: brushSize,
         });
         fabricCanvas.add(rect);
@@ -257,7 +381,7 @@ export const WhiteboardCanvas = ({
           top: centerY - 50,
           fill: fillColor,
           radius: 50,
-          stroke: strokeColor,
+          stroke: getStrokeColor(strokeColor, theme),
           strokeWidth: brushSize,
         });
         fabricCanvas.add(circle);
@@ -301,7 +425,7 @@ export const WhiteboardCanvas = ({
           fill: fillColor,
           width: 100,
           height: 100,
-          stroke: strokeColor,
+          stroke: getStrokeColor(strokeColor, theme),
           strokeWidth: brushSize,
         });
         fabricCanvas.add(triangle);
@@ -322,7 +446,7 @@ export const WhiteboardCanvas = ({
         break;
     }
     fabricCanvas.renderAll();
-    setStrokeColor("#000");
+    console.log(theme, strokeColor);
   };
 
   function addingShapeOnMouseDown(e) {
@@ -334,7 +458,7 @@ export const WhiteboardCanvas = ({
       "M" + pointer.x + " " + pointer.y + " L " + pointer.x + " " + pointer.y;
     const line = new Path(linePath, {
       label: "line",
-      stroke: strokeColor,
+      stroke: getStrokeColor(strokeColor, theme),
       strokeWidth: 3,
       originX: "center",
       originY: "center",
@@ -350,8 +474,8 @@ export const WhiteboardCanvas = ({
     if (shapeType === "single-arrow" || shapeType === "double-arrow") {
       const arrowHead1 = new Path(arrowHeadPath, {
         label: "arrow-line",
-        fill: strokeColor,
-        stroke: strokeColor,
+        fill: getStrokeColor(strokeColor, theme),
+        stroke: getStrokeColor(strokeColor, theme),
         strokeWidth: 0,
         originX: "center",
         originY: "center",
@@ -367,8 +491,8 @@ export const WhiteboardCanvas = ({
     if (shapeType === "double-arrow") {
       const arrowHead2 = new Path(arrowHeadPath, {
         label: "arrow-line",
-        fill: strokeColor,
-        stroke: strokeColor,
+        fill: getStrokeColor(strokeColor, theme),
+        stroke: getStrokeColor(strokeColor, theme),
         strokeWidth: 0,
         originX: "center",
         originY: "center",
@@ -464,7 +588,7 @@ export const WhiteboardCanvas = ({
         shapeType === "single-arrow" || shapeType === "double-arrow"
           ? "arrow-line"
           : "line",
-      stroke: strokeColor,
+      stroke: getStrokeColor(strokeColor, theme),
       strokeWidth: 3,
       originX: "center",
       originY: "center",
@@ -548,7 +672,7 @@ export const WhiteboardCanvas = ({
     });
 
     const isInsideShape = objectsAtPoint.length > 0;
-    const textColor = isInsideShape ? "#ffffff" : strokeColor;
+    const textColor = isInsideShape ? "#ffffff" : getStrokeColor(strokeColor, theme);
 
     const text = new IText("Type here...", {
       label: "text",

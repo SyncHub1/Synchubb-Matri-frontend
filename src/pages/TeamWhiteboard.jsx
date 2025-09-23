@@ -15,7 +15,7 @@ import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { LayersList } from "@/components/whiteboard/LayersList";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
-import { string } from "zod";
+import { useTheme } from "next-themes";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -27,12 +27,84 @@ const TeamWhiteboard = () => {
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [diameter, setDiameter] = useState("");
-  const [strokeColor, setStrokeColor] = useState("#000");  
+  const [strokeColor, setStrokeColor] = useState("");  
   const [fillColor, setFillColor] = useState("");
   const [fontSize, setFontSize] = useState(28);
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
+  const {theme, setTheme} = useTheme(); 
+  const baseColors = [
+    "#000000",
+    "#374151",
+    "#6B7280",
+    "#9CA3AF",
+    "#D1D5DB",
+    "#F3F4F6",
+    "#FFFFFF",
+    "#DC2626",
+    "#EA580C",
+    "#D97706",
+    "#CA8A04",
+    "#65A30D",
+    "#16A34A",
+    "#059669",
+    "#0891B2",
+    "#0284C7",
+    "#2563EB",
+    "#4F46E5",
+    "#7C3AED",
+    "#A855F7",
+    "#C026D3",
+    "#E11D48",
+  ];
+
+  const darkColors = [
+    "#000000",
+    "#1f2937",
+    "#4b5563",
+    "#6b7280",
+    "#9ca3af",
+    "#d1d5db",
+    "#e5e7eb",
+    "#991b1b",
+    "#9a3412",
+    "#92400e",
+    "#854d0e",
+    "#3f6212",
+    "#166534",
+    "#065f46",
+    "#075985",
+    "#1e3a8a",
+    "#1e40af",
+    "#3730a3",
+    "#5b21b6",
+    "#7e22ce",
+    "#9d174d",
+  ];
+
+  const lightColors = [
+    "#262626",
+    "#6b7280",
+    "#9ca3af",
+    "#d1d5db",
+    "#e5e7eb",
+    "#f3f4f6",
+    "#ffffff",
+    "#f87171",
+    "#fb923c",
+    "#fbbf24",
+    "#facc15",
+    "#a3e635",
+    "#4ade80",
+    "#34d399",
+    "#22d3ee",
+    "#60a5fa",
+    "#818cf8",
+    "#a5b4fc",
+    "#c4b5fd",
+    "#d8b4fe",
+    "#f472b6",
+  ];
   // Current user for collaboration
   const currentUser = {
     id: "current-user",
@@ -234,8 +306,6 @@ const TeamWhiteboard = () => {
     };    
 
 
-
-
   // Simulate collaborative cursor movement
   useEffect(() => {
     const interval = setInterval(() => {
@@ -247,7 +317,7 @@ const TeamWhiteboard = () => {
   const clearSettings = () => {
         setWidth("");
         setHeight("");
-        setStrokeColor("#000");
+        setStrokeColor("");
         setFillColor("");
         setDiameter("");
     };
@@ -311,6 +381,7 @@ const TeamWhiteboard = () => {
 
   const handleStrokeColorChange = (color) => {
       const value = color;
+      console.log(selectedObject);
       setStrokeColor(value);
       if (selectedObject) {
           selectedObject.set({stroke: value});
@@ -344,7 +415,8 @@ const TeamWhiteboard = () => {
           head2.set({ fill: color });     
         }
       } else {
-        selectedObject.set({fill: color});
+        selectedObject.set({stroke: color});
+        console.log(selectedObject);
       }
       fabricCanvas.renderAll();
   };   
@@ -542,6 +614,9 @@ const TeamWhiteboard = () => {
             width={width}
             diameter={diameter}/>
           <ColorPicker
+            darkColors={darkColors}
+            lightColors={lightColors}
+            baseColors={baseColors}
             selectedObject={selectedObject} 
             selectedColor={selectedColor}
             selectedTool={selectedTool}
@@ -603,12 +678,16 @@ const TeamWhiteboard = () => {
       {/* Main Canvas */}
       <div className="absolute inset-0 top-16 lg:top-0">
         <WhiteboardCanvas
+          darkColors={darkColors}
+          lightColors={lightColors}
+          baseColors={baseColors}
           selectedTool={selectedTool}
           strokeColor={strokeColor}
           fillColor={fillColor}
           brushSize={brushSize}
           zoom={zoom}
           fontSize={fontSize}
+          clearSettings={clearSettings}
           setSelectedTool={setSelectedTool}
           setStrokeColor={setStrokeColor}
           onCanvasReady={handleCanvasReady}

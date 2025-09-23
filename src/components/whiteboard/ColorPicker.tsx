@@ -6,14 +6,14 @@ import {
 } from "@/components/ui/popover";
 import { FabricObject } from "fabric";
 import { Label } from "../ui/label";
+import { useTheme } from "next-themes";
 
-declare module "fabric" {
-  interface Object {
-    label?: string;
-  }
-}
+
 
 interface ColorPickerProps {
+  darkColors: string[],
+  lightColors: string[],
+  baseColors: string[],
   selectedObject: FabricObject | null;
   strokeColor: string;
   fillColor: string;
@@ -24,6 +24,9 @@ interface ColorPickerProps {
 }
 
 export const ColorPicker = ({
+  darkColors,
+  lightColors,
+  baseColors,
   selectedTool,
   selectedObject,
   strokeColor,
@@ -32,41 +35,17 @@ export const ColorPicker = ({
   handleFillColorChange,
   handleGroupnTextColorChange,
 }: ColorPickerProps) => {
-  const colors = [
-    "#000000",
-    "#374151",
-    "#6B7280",
-    "#9CA3AF",
-    "#D1D5DB",
-    "#F3F4F6",
-    "#FFFFFF",
-    "#DC2626",
-    "#EA580C",
-    "#D97706",
-    "#CA8A04",
-    "#65A30D",
-    "#16A34A",
-    "#059669",
-    "#0891B2",
-    "#0284C7",
-    "#2563EB",
-    "#4F46E5",
-    "#7C3AED",
-    "#A855F7",
-    "#C026D3",
-    "#E11D48",
-  ];
-  const fillStrokeColorObjs = ["rectangle", "triangle", "pen","circle"];
-  const strokeColorObjs = [
-    "line",
-    "single-arrow",
-    "double-arrow",
-    
-    "text",
-  ];
+
+  const {theme, setTheme} = useTheme();
+  
+  const fillStrokeColorObjs = ["rectangle", "triangle", "pen", "circle"];
+  const strokeColorObjs = ["line", "single-arrow", "double-arrow", "text"];
+  const strokePalette = theme === "dark" ? lightColors:darkColors;
+  const fillPalette = theme === "dark" ? darkColors:lightColors;
   return (
     <div>
-      {(fillStrokeColorObjs.includes(selectedTool) || fillStrokeColorObjs.includes(selectedObject?.label)) && (
+      {(fillStrokeColorObjs.includes(selectedTool) ||
+        fillStrokeColorObjs.includes((selectedObject as any)?.label)) && (
         <div className="p-2 space-y-2">
           <div className="flex flex-col gap-2">
             <Label>Stroke:</Label>
@@ -81,7 +60,7 @@ export const ColorPicker = ({
               </PopoverTrigger>
               <PopoverContent className="w-56 p-3">
                 <div className="grid grid-cols-7 gap-2">
-                  {colors.map((colorInArr) => (
+                  {strokePalette.map((colorInArr) => (
                     <button
                       key={colorInArr}
                       className={`w-8 h-8 rounded border-2 transition-all hover:scale-110 ${
@@ -119,7 +98,7 @@ export const ColorPicker = ({
               </PopoverTrigger>
               <PopoverContent className="w-56 p-3">
                 <div className="grid grid-cols-7 gap-2">
-                  {colors.map((colorInArr) => (
+                  {fillPalette.map((colorInArr) => (
                     <button
                       key={colorInArr}
                       className={`w-8 h-8 rounded border-2 transition-all hover:scale-110 ${
@@ -146,7 +125,8 @@ export const ColorPicker = ({
           </div>
         </div>
       )}
-      {(strokeColorObjs.includes(selectedTool) || strokeColorObjs.includes(selectedObject?.label)) && (
+      {(strokeColorObjs.includes(selectedTool) ||
+        strokeColorObjs.includes((selectedObject as any)?.label)) && (
         <div className="flex flex-col gap-2 p-2">
           <Label>Stroke:</Label>
           <Popover>
@@ -160,7 +140,7 @@ export const ColorPicker = ({
             </PopoverTrigger>
             <PopoverContent className="w-56 p-3">
               <div className="grid grid-cols-7 gap-2">
-                {colors.map((colorInArr) => (
+                {strokePalette.map((colorInArr) => (
                   <button
                     key={colorInArr}
                     className={`w-8 h-8 rounded border-2 transition-all hover:scale-110 ${

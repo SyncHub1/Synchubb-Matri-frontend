@@ -12,6 +12,8 @@ import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
 import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
+import { useTeam, useWhiteboard, useSaveWhiteboard } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -21,7 +23,17 @@ const TeamWhiteboard = () => {
   const [brushSize, setBrushSize] = useState(3);
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
+
+  const { isSocketConnected, joinWhiteboard, leaveWhiteboard, onWhiteboardUpdate } = useMatri();
+
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  const { data: whiteboardData } = useWhiteboard(id || '');
+  const saveWhiteboardMutation = useSaveWhiteboard();
+
+  const team = teamData?.data;
+  const whiteboard = whiteboardData?.data;
+
   // Current user for collaboration
   const currentUser = {
     id: "current-user",

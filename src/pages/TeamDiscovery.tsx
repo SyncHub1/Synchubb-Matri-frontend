@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Filter, Plus, Users, MapPin, Calendar, Star, ChevronLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,163 +7,76 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/components/AuthProvider";
-import { teamService, apiUtils } from "@/lib/api";
+import { useTeams, useJoinTeam } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 import { toast } from "sonner";
+
+// Base categories definition - moved outside component to prevent recreation
+const baseCategories = [
+  { id: "all", label: "All Teams" },
+  { id: "web-development", label: "Web Development" },
+  { id: "mobile-apps", label: "Mobile Apps" },
+  { id: "ai-ml", label: "AI/ML" },
+  { id: "blockchain", label: "Blockchain" },
+  { id: "iot", label: "IoT" },
+  { id: "game-dev", label: "Game Dev" },
+  { id: "design", label: "Design" },
+  { id: "data-science", label: "Data Science" },
+];
 
 const TeamDiscovery = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [teams, setTeams] = useState<any[]>([]);
-  const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState([
-    { id: "all", label: "All Teams", count: 0 },
-    { id: "web-development", label: "Web Development", count: 0 },
-    { id: "mobile-apps", label: "Mobile Apps", count: 0 },
-    { id: "ai-ml", label: "AI/ML", count: 0 },
-    { id: "blockchain", label: "Blockchain", count: 0 },
-    { id: "iot", label: "IoT", count: 0 },
-    { id: "game-dev", label: "Game Dev", count: 0 },
-    { id: "design", label: "Design", count: 0 },
-    { id: "data-science", label: "Data Science", count: 0 },
-  ]);
   const location = useLocation();
   const navigate = useNavigate();
 
   const { user } = useAuthContext();
+  const { isConnected } = useMatri();
+  
+  // Use the new Matri API hooks
+  const { data: teamsData, isLoading, error, refetch } = useTeams({
+    search: searchQuery,
+    category: selectedCategory !== 'all' ? selectedCategory : undefined
+  });
+  const joinTeamMutation = useJoinTeam();
+  
+  const teams = teamsData?.data || [];
 
-  // Load teams on component mount
-  useEffect(() => {
-    loadTeams();
-  }, []);
-
-  // Refresh teams when component becomes visible (for navigation back)
-  useEffect(() => {
-    const handleFocus = () => {
-      loadTeams();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  // Compute categories with counts using useMemo to prevent infinite loops
+  const categories = useMemo(() => {
+    return baseCategories.map(cat => ({
+      ...cat,
+      count: teams.filter((team: any) => {
+        if (cat.id === "all") return true;
+        
+        // Normalize team category to match category ID
+        const teamCategoryNormalized = team.category?.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        
+        // Special handling for AI/ML category
+        if (cat.id === "ai-ml" && (team.category === "AI/ML" || teamCategoryNormalized === "ai-ml")) {
+          return true;
+        }
+        
+        return teamCategoryNormalized === cat.id;
+      }).length
+    }));
+  }, [teams]);
 
   // Check for refresh parameter from navigation
   useEffect(() => {
     if (location.state?.refresh) {
-      loadTeams();
+      refetch();
       // Clear the refresh state
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+  }, [location.state, refetch]);
 
-  const loadTeams = async () => {
-    try {
-      const response = await teamService.getTeams();
-      const teamsData = (response as any).data;
-      setTeams(teamsData);
-      setFilteredTeams(teamsData);
-      
-      // Update category counts
-      const updatedCategories = categories.map(cat => ({
-        ...cat,
-        count: teamsData.filter((team: any) => {
-          if (cat.id === "all") return true;
-          
-          // Normalize team category to match category ID
-          const teamCategoryNormalized = team.category?.toLowerCase().replace(/[^a-z0-9]/g, '-');
-          
-          // Special handling for AI/ML category
-          if (cat.id === "ai-ml" && (team.category === "AI/ML" || teamCategoryNormalized === "ai-ml")) {
-            return true;
-          }
-          
-          return teamCategoryNormalized === cat.id;
-        }).length
-      }));
-      setCategories(updatedCategories);
-    } catch (error) {
-      console.error("Error loading teams:", error);
-      const errorMessage = apiUtils.handleError(error);
-      
-      // In embedded mode, if there's an auth error, we can still show some teams
-      if (errorMessage.includes('Authentication required')) {
-        console.log('Running in embedded mode - showing mock teams');
-        // Set some default teams for embedded mode
-        const defaultTeams = [
-          {
-            id: 'team_1',
-            name: 'Web Development Team',
-            description: 'Building amazing web applications',
-            category: 'Web Development',
-            visibility: 'public',
-            maxMembers: 5,
-            location: 'Remote',
-            skills: ['React', 'Node.js', 'TypeScript'],
-            members: [],
-            admins: [],
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'team_2',
-            name: 'AI/ML Research',
-            description: 'Exploring the future of artificial intelligence',
-            category: 'AI/ML',
-            visibility: 'private',
-            maxMembers: 8,
-            location: 'San Francisco, CA',
-            skills: ['Python', 'TensorFlow', 'PyTorch'],
-            members: [],
-            admins: [],
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'team_3',
-            name: 'Mobile App Development',
-            description: 'Creating innovative mobile experiences',
-            category: 'Mobile Apps',
-            visibility: 'public',
-            maxMembers: 6,
-            location: 'New York, NY',
-            skills: ['React Native', 'Flutter', 'iOS'],
-            members: [],
-            admins: [],
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'team_4',
-            name: 'Ai Interns',
-            description: 'kjndjrfnljernfkrlemf;rlefn3kfer',
-            category: 'AI/ML',
-            visibility: 'public',
-            maxMembers: 10,
-            location: 'Remote',
-            skills: ['Machine Learning', 'Python', 'Data Analysis'],
-            members: [
-              { id: 'user_1', name: 'User 1', email: 'user1@example.com' },
-              { id: 'user_2', name: 'User 2', email: 'user2@example.com' },
-              { id: 'user_3', name: 'User 3', email: 'user3@example.com' },
-              { id: 'user_4', name: 'User 4', email: 'user4@example.com' }
-            ],
-            admins: [],
-            createdAt: new Date().toISOString()
-          }
-        ];
-        setTeams(defaultTeams);
-        setFilteredTeams(defaultTeams);
-      } else {
-        toast.error(errorMessage || "Failed to load teams");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Filter teams based on search and category
-  useEffect(() => {
-    const filtered = teams.filter(team => {
-    const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         team.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
+  // Filter teams based on search and category using useMemo
+  const filteredTeams = useMemo(() => {
+    return teams.filter(team => {
+      const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           team.description.toLowerCase().includes(searchQuery.toLowerCase());
+        
       const matchesCategory = selectedCategory === "all" || (() => {
         // Normalize team category to match category ID
         const teamCategoryNormalized = team.category?.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -176,33 +89,17 @@ const TeamDiscovery = () => {
         return teamCategoryNormalized === selectedCategory;
       })();
       
-    return matchesSearch && matchesCategory;
-  });
-    setFilteredTeams(filtered);
+      return matchesSearch && matchesCategory;
+    });
   }, [teams, searchQuery, selectedCategory]);
 
   const handleJoinTeam = async (teamId: string) => {
     try {
-      const response = await teamService.joinTeam(teamId);
-      const result = (response as any).data;
-      if (result.success) {
-        toast.success("Successfully joined the team!");
-        navigate(`/dashboard/maitri/teams/${teamId}/chat`);
-      } else {
-        toast.error(result.error || "Failed to join team");
-      }
+      await joinTeamMutation.mutateAsync(teamId);
+      navigate(`/dashboard/maitri/teams/${teamId}/chat`);
     } catch (error) {
       console.error("Error joining team:", error);
-      const errorMessage = apiUtils.handleError(error);
-      
-      // In embedded mode, show success even if there's an auth error
-      if (errorMessage.includes('Authentication required')) {
-        console.log('Running in embedded mode - simulating join success');
-        toast.success("Successfully joined the team!");
-        navigate(`/dashboard/maitri/teams/${teamId}/chat`);
-      } else {
-        toast.error(errorMessage || "Error joining team");
-      }
+      // Error handling is done in the mutation hook
     }
   };
 
@@ -255,6 +152,9 @@ const TeamDiscovery = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        {/* Connection Status */}
+        <MatriConnectionStatus />
+        
         {/* Search and Filter */}
         <div className="mb-6 sm:mb-8 space-y-3 sm:space-y-4">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">

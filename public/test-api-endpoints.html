@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matri API Endpoints Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .endpoint-test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 3px; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .status-200 { background: #28a745; color: white; }
+        .status-404 { background: #dc3545; color: white; }
+        .status-500 { background: #6c757d; color: white; }
+        .status-error { background: #ffc107; color: black; }
+        h1 { color: #2563eb; text-align: center; }
+        h2 { color: #059669; border-bottom: 2px solid #059669; padding-bottom: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        .method-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 8px; }
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: black; }
+        .method-delete { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Matri API Endpoints Test</h1>
+        
+        <div class="info">
+            <h3>🎯 API Testing Dashboard</h3>
+            <p>This tool tests all Matri API endpoints to identify and resolve 404 errors.</p>
+            <p><strong>Current Issues from Console:</strong></p>
+            <ul>
+                <li>❌ GET /api/v1/teams - 404 Not Found</li>
+                <li>❌ API requests failing with status code 404</li>
+                <li>❌ Auth rehydration timeout</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="testAllEndpoints()">🚀 Test All Endpoints</button>
+            <button onclick="testBasicEndpoints()">🔍 Test Basic Endpoints</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3003';
+        const PROXY_BASE = ''; // Use proxy for same-origin requests
+
+        const endpoints = [
+            // Health and basic endpoints
+            { method: 'GET', path: '/health', name: 'Health Check', useProxy: false },
+            { method: 'GET', path: '/api/v1/teams/test', name: 'Teams Test Endpoint', useProxy: false },
+            
+            // Teams API (via proxy)
+            { method: 'GET', path: '/api/teams', name: 'Get Teams (Proxy)', useProxy: true },
+            { method: 'GET', path: '/api/teams/test', name: 'Teams Test (Proxy)', useProxy: true },
+            
+            // Teams API (direct)
+            { method: 'GET', path: '/api/v1/teams', name: 'Get Teams (Direct)', useProxy: false },
+            { method: 'GET', path: '/api/v1/teams/test', name: 'Teams Test (Direct)', useProxy: false },
+            
+            // Other API endpoints
+            { method: 'GET', path: '/api/v1/chat/test', name: 'Chat Test', useProxy: false },
+            { method: 'GET', path: '/api/v1/tasks/test', name: 'Tasks Test', useProxy: false },
+            { method: 'GET', path: '/api/v1/analytics/test', name: 'Analytics Test', useProxy: false },
+        ];
+
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `endpoint-test ${type}`;
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function getStatusBadge(status, error = null) {
+            if (error) return '<span class="status-badge status-error">ERROR</span>';
+            
+            const statusClass = status >= 200 && status < 300 ? 'status-200' : 
+                               status === 404 ? 'status-404' : 
+                               status >= 500 ? 'status-500' : 'status-error';
+            
+            return `<span class="status-badge ${statusClass}">${status}</span>`;
+        }
+
+        function getMethodBadge(method) {
+            const methodClass = `method-${method.toLowerCase()}`;
+            return `<span class="method-badge ${methodClass}">${method}</span>`;
+        }
+
+        async function testEndpoint(endpoint) {
+            const url = endpoint.useProxy ? endpoint.path : `${API_BASE}${endpoint.path}`;
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url, {
+                    method: endpoint.method,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                let responseData = null;
+                let responseText = '';
+                
+                try {
+                    responseText = await response.text();
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = { raw: responseText };
+                }
+
+                return {
+                    success: true,
+                    status: response.status,
+                    ok: response.ok,
+                    responseTime,
+                    data: responseData,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    status: null
+                };
+            }
+        }
+
+        async function testAllEndpoints() {
+            clearResults();
+            addResult('🔄 Testing All API Endpoints...', 'Please wait while we test all endpoints.');
+
+            for (const endpoint of endpoints) {
+                const result = await testEndpoint(endpoint);
+                displayEndpointResult(endpoint, result);
+            }
+
+            // Summary
+            const successCount = document.querySelectorAll('.success').length;
+            const errorCount = document.querySelectorAll('.error').length;
+            const warningCount = document.querySelectorAll('.warning').length;
+            
+            const summaryType = errorCount === 0 ? 'success' : (successCount > 0 ? 'warning' : 'error');
+            const summaryMessage = `
+                <h4>📊 Test Summary</h4>
+                <p><strong>✅ Successful:</strong> ${successCount}</p>
+                <p><strong>⚠️ Warnings:</strong> ${warningCount}</p>
+                <p><strong>❌ Errors:</strong> ${errorCount}</p>
+                ${errorCount > 0 ? '<p><strong>Action Required:</strong> Fix the failing endpoints to resolve 404 errors.</p>' : '<p><strong>Status:</strong> All endpoints are working correctly!</p>'}
+            `;
+            
+            addResult('📈 Test Results Summary', summaryMessage, summaryType);
+        }
+
+        async function testBasicEndpoints() {
+            clearResults();
+            addResult('🔍 Testing Basic Endpoints...', 'Testing health and core endpoints.');
+
+            const basicEndpoints = endpoints.slice(0, 4); // First 4 endpoints
+            for (const endpoint of basicEndpoints) {
+                const result = await testEndpoint(endpoint);
+                displayEndpointResult(endpoint, result);
+            }
+        }
+
+        function displayEndpointResult(endpoint, result) {
+            const isSuccess = result.success && result.ok;
+            const isWarning = result.success && !result.ok && result.status !== 404;
+            const type = isSuccess ? 'success' : (isWarning ? 'warning' : 'error');
+            
+            const statusBadge = getStatusBadge(result.status, result.error);
+            const methodBadge = getMethodBadge(endpoint.method);
+            
+            let content = `
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    ${methodBadge}
+                    <strong>${endpoint.name}</strong>
+                    ${statusBadge}
+                    <span style="margin-left: auto; font-size: 12px;">
+                        ${endpoint.useProxy ? '🔄 Proxy' : '🔗 Direct'}
+                        ${result.responseTime ? ` | ${result.responseTime}ms` : ''}
+                    </span>
+                </div>
+                <div style="font-family: monospace; font-size: 12px; color: #666; margin-bottom: 10px;">
+                    ${endpoint.method} ${endpoint.useProxy ? endpoint.path : `${API_BASE}${endpoint.path}`}
+                </div>
+            `;
+
+            if (result.success) {
+                content += `
+                    <div style="margin: 10px 0;">
+                        <strong>Status:</strong> ${result.status} ${result.ok ? '✅' : '❌'}
+                    </div>
+                `;
+                
+                if (result.data) {
+                    content += `
+                        <div style="margin: 10px 0;">
+                            <strong>Response:</strong>
+                            <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+                
+                if (result.headers && result.headers['access-control-allow-origin']) {
+                    content += `
+                        <div style="margin: 10px 0;">
+                            <strong>CORS:</strong> ✅ Access-Control-Allow-Origin: ${result.headers['access-control-allow-origin']}
+                        </div>
+                    `;
+                }
+            } else {
+                content += `
+                    <div style="margin: 10px 0;">
+                        <strong>Error:</strong> ${result.error}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Matri service is not running on port 3003</li>
+                            <li>API endpoint is not implemented</li>
+                            <li>CORS configuration issues</li>
+                            <li>Network connectivity problems</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Add specific recommendations
+            if (result.status === 404) {
+                content += `
+                    <div style="margin: 10px 0; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                        <strong>🔧 Fix Required:</strong> This endpoint returns 404. The route may not be implemented or registered correctly.
+                    </div>
+                `;
+            } else if (result.success && result.ok) {
+                content += `
+                    <div style="margin: 10px 0; padding: 10px; background: #d4edda; border-radius: 5px;">
+                        <strong>✅ Working:</strong> This endpoint is functioning correctly.
+                    </div>
+                `;
+            }
+
+            addResult(`${methodBadge}${endpoint.name}`, content, type);
+        }
+
+        // Auto-run basic test on page load
+        window.onload = () => {
+            setTimeout(() => {
+                addResult('🎯 API Testing Ready', `
+                    <p>This page will test all Matri API endpoints to identify and resolve 404 errors.</p>
+                    <p><strong>Issues to Resolve:</strong></p>
+                    <ul>
+                        <li>❌ GET /api/v1/teams returning 404</li>
+                        <li>❌ API endpoints not responding correctly</li>
+                        <li>❌ Frontend unable to load team data</li>
+                    </ul>
+                    <p>Click "Test All Endpoints" to diagnose all API issues.</p>
+                `);
+            }, 500);
+        };
+    </script>
+</body>
+</html>

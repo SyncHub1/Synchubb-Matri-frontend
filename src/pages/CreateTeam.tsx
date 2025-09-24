@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, Users, Lock, Globe, Info, Search, Mail, UserPlus, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { teamService, apiUtils } from "@/lib/api";
+import { useCreateTeam, useSearchUsers, useSendInvitations } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 
 const CreateTeam = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isConnected } = useMatri();
+  
   const [teamData, setTeamData] = useState({
     name: "",
     description: "",
@@ -34,6 +36,13 @@ const CreateTeam = () => {
   const [emailInput, setEmailInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  
+  // Use the new Matri API hooks
+  const createTeamMutation = useCreateTeam();
+  const { data: userSearchData } = useSearchUsers(searchQuery);
+  const sendInvitationsMutation = useSendInvitations();
+  
+  const isLoading = createTeamMutation.isPending || sendInvitationsMutation.isPending;
 
   const categories = [
     "Web Development",
@@ -73,31 +82,21 @@ const CreateTeam = () => {
     });
   };
 
-  // Search for authenticated users
-  const searchUsers = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      // Simulate API call to search users
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+  // Update search results when user search data changes
+  useEffect(() => {
+    if (userSearchData?.data) {
+      setSearchResults(userSearchData.data);
+    } else if (searchQuery.trim()) {
+      // Fallback to mock users if API is not available
       const filtered = mockUsers.filter(user => 
-        user.name.toLowerCase().includes(query.toLowerCase()) ||
-        user.email.toLowerCase().includes(query.toLowerCase())
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      
       setSearchResults(filtered);
-    } catch (error) {
-      console.error('Error searching users:', error);
-      toast.error('Failed to search users');
-    } finally {
-      setIsSearching(false);
+    } else {
+      setSearchResults([]);
     }
-  };
+  }, [userSearchData, searchQuery]);
 
   // Add member to selected list
   const addMember = (user: any) => {
@@ -127,22 +126,22 @@ const CreateTeam = () => {
     setEmailInvites(emailInvites.filter(e => e !== email));
   };
 
-  // Send email invitations
-  const sendEmailInvitations = async () => {
+  // Send email invitations using the mutation
+  const sendEmailInvitations = async (teamId: string) => {
     if (emailInvites.length === 0) return;
 
-    setIsInviting(true);
     try {
-      // Simulate sending email invitations
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success(`Invitations sent to ${emailInvites.length} email(s)`);
+      await sendInvitationsMutation.mutateAsync({
+        teamId,
+        invitationData: {
+          emails: emailInvites,
+          message: `You've been invited to join ${teamData.name}!`
+        }
+      });
       setEmailInvites([]);
     } catch (error) {
       console.error('Error sending invitations:', error);
-      toast.error('Failed to send invitations');
-    } finally {
-      setIsInviting(false);
+      // Error handling is done in the mutation hook
     }
   };
 
@@ -170,34 +169,22 @@ const CreateTeam = () => {
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      // Create the team with selected members
-      const teamWithMembers = {
-        ...teamData,
-        members: selectedMembers,
-        emailInvites: emailInvites
-      };
+      // Create the team
+      const response = await createTeamMutation.mutateAsync(teamData);
       
-      const response = await teamService.createTeam(teamWithMembers);
+      const createdTeam = response.data;
       
       // Send email invitations if any
-      if (emailInvites.length > 0) {
-        await sendEmailInvitations();
+      if (emailInvites.length > 0 && createdTeam._id) {
+        await sendEmailInvitations(createdTeam._id);
       }
-      
-    toast.success("Team created successfully!");
-      console.log("Team created:", (response as any).data);
       
       // Navigate to teams page with refresh parameter
       navigate("/dashboard/maitri/teams", { state: { refresh: true } });
     } catch (error: any) {
       console.error("Error creating team:", error);
-      const errorMessage = apiUtils.handleError(error);
-      toast.error(errorMessage || "Failed to create team");
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the mutation hooks
     }
   };
 
@@ -408,14 +395,14 @@ const CreateTeam = () => {
                     placeholder="Search members by username "
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), searchUsers(searchQuery))}
+                    onKeyPress={(e) => e.key === "Enter" && e.preventDefault()}
                     disabled={isLoading || isSearching}
                     className="h-10 sm:h-11"
                   />
                 </div>
                 <Button
                   type="button"
-                  onClick={() => searchUsers(searchQuery)}
+                  onClick={() => setSearchQuery(searchQuery)}
                   disabled={isLoading || isSearching}
                   className="h-10 sm:h-11"
                 >
@@ -539,7 +526,7 @@ const CreateTeam = () => {
                 <Button
                   variant="purple"
                   type="button"
-                  onClick={sendEmailInvitations}
+                  onClick={() => sendEmailInvitations('')}
                   disabled={isLoading || isInviting}
                   className="min-w-32 h-10 sm:h-11"
                 >

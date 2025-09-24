@@ -5,7 +5,9 @@ const API_BASE_URLS = {
   auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:8000',
   media: import.meta.env.VITE_MEDIA_API_URL || 'http://localhost:3001',
   websocket: import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3002',
-  shared: import.meta.env.VITE_SHARED_UTILS_URL || 'http://localhost:3004'
+  shared: import.meta.env.VITE_SHARED_UTILS_URL || 'http://localhost:3004',
+  matri: import.meta.env.VITE_MATRI_API_URL || 'http://localhost:3003',
+  matriSocket: import.meta.env.VITE_MATRI_SOCKET_URL || 'http://localhost:3003'
 };
 
 // Create axios instances for each service
@@ -21,6 +23,12 @@ const mediaApi = axios.create({
   withCredentials: true
 });
 
+const matriApi = axios.create({
+  baseURL: API_BASE_URLS.matri,
+  timeout: 15000,
+  withCredentials: true
+});
+
 // Request interceptors to add auth token
 const addAuthToken = (config: any) => {
   const token = localStorage.getItem('authToken');
@@ -32,6 +40,7 @@ const addAuthToken = (config: any) => {
 
 authApi.interceptors.request.use(addAuthToken);
 mediaApi.interceptors.request.use(addAuthToken);
+matriApi.interceptors.request.use(addAuthToken);
 
 // Response interceptors for error handling
 const handleResponseError = (error: any) => {
@@ -45,6 +54,7 @@ const handleResponseError = (error: any) => {
 
 authApi.interceptors.response.use(response => response, handleResponseError);
 mediaApi.interceptors.response.use(response => response, handleResponseError);
+matriApi.interceptors.response.use(response => response, handleResponseError);
 
 // Authentication Service API
 export const authService = {
@@ -145,7 +155,7 @@ export const mediaService = {
   deleteFile: (id: string) => mediaApi.delete(`/files/${id}`)
 };
 
-// Team Service API (using WebSocket service)
+// Team Service API (now using Matri backend service)
 export const teamService = {
   // Create a new team/group
   createTeam: async (teamData: {
@@ -159,271 +169,176 @@ export const teamService = {
     members?: any[];
     emailInvites?: string[];
   }) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation for now
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockTeam = {
-          id: `team_${Date.now()}`,
-          ...teamData,
-          createdAt: new Date().toISOString(),
-          members: teamData.members || [],
-          admins: [],
-          isArchived: false,
-          isMuted: false
-        };
-        
-        // Store the new team in localStorage
-        const existingTeams = JSON.parse(localStorage.getItem('maitri_teams') || '[]');
-        existingTeams.push(mockTeam);
-        localStorage.setItem('maitri_teams', JSON.stringify(existingTeams));
-        
-        resolve({ data: mockTeam });
-      }, 1000);
-    });
+    try {
+      const response = await matriApi.post('/teams', {
+        name: teamData.name,
+        description: teamData.description,
+        category: teamData.category,
+        visibility: teamData.visibility,
+        maxMembers: teamData.maxMembers,
+        location: teamData.location,
+        skills: teamData.skills,
+        settings: {
+          allowInvitations: true,
+          requireApproval: teamData.visibility === 'private'
+        }
+      });
+      
+      // Send email invitations if provided
+      if (teamData.emailInvites && teamData.emailInvites.length > 0) {
+        await matriApi.post(`/invitations/${response.data.data._id}/invite`, {
+          emails: teamData.emailInvites,
+          message: `You've been invited to join ${teamData.name}!`
+        });
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to create team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to create team');
+    }
   },
 
   // Search for users to invite
   searchUsers: async (query: string) => {
-    // Mock implementation - in real app, this would call the auth service
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockUsers = [
-          { id: 'user_1', name: 'Alex Johnson', email: 'alex@example.com', avatar: 'AJ' },
-          { id: 'user_2', name: 'Sarah Chen', email: 'sarah@example.com', avatar: 'SC' },
-          { id: 'user_3', name: 'Mike Rodriguez', email: 'mike@example.com', avatar: 'MR' },
-          { id: 'user_4', name: 'Emma Wilson', email: 'emma@example.com', avatar: 'EW' },
-          { id: 'user_5', name: 'David Kim', email: 'david@example.com', avatar: 'DK' },
-          { id: 'user_6', name: 'Lisa Thompson', email: 'lisa@example.com', avatar: 'LT' },
-        ];
-        
-        const filtered = mockUsers.filter(user => 
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          user.email.toLowerCase().includes(query.toLowerCase())
-        );
-        
-        resolve({ data: filtered });
-      }, 500);
-    });
+    try {
+      const response = await matriApi.get('/invitations/users/search', {
+        params: { query }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to search users:', error);
+      // Fallback to mock data if search fails
+      const mockUsers = [
+        { id: 'user_1', name: 'Alex Johnson', email: 'alex@example.com', avatar: 'AJ' },
+        { id: 'user_2', name: 'Sarah Chen', email: 'sarah@example.com', avatar: 'SC' },
+        { id: 'user_3', name: 'Mike Rodriguez', email: 'mike@example.com', avatar: 'MR' },
+        { id: 'user_4', name: 'Emma Wilson', email: 'emma@example.com', avatar: 'EW' },
+        { id: 'user_5', name: 'David Kim', email: 'david@example.com', avatar: 'DK' },
+        { id: 'user_6', name: 'Lisa Thompson', email: 'lisa@example.com', avatar: 'LT' },
+      ];
+      
+      const filtered = mockUsers.filter(user => 
+        user.name.toLowerCase().includes(query.toLowerCase()) ||
+        user.email.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      return { data: filtered };
+    }
   },
 
   // Send email invitations
   sendEmailInvitations: async (emails: string[], teamId: string, teamName: string) => {
-    // Mock implementation - in real app, this would call the email service
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`Sending invitations to: ${emails.join(', ')} for team: ${teamName}`);
-        
-        // In a real implementation, this would:
-        // 1. Call the email service (nodemailer)
-        // 2. Send invitation emails with team join links
-        // 3. Track invitation status
-        
-        resolve({ 
-          data: { 
-            success: true, 
-            message: `Invitations sent to ${emails.length} email(s)`,
-            sentEmails: emails 
-          } 
-        });
-      }, 2000);
-    });
+    try {
+      const response = await matriApi.post(`/invitations/${teamId}/invite`, {
+        emails,
+        message: `You've been invited to join ${teamName}!`
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to send invitations:', error);
+      throw new Error(error.response?.data?.message || 'Failed to send invitations');
+    }
   },
 
   // Get all teams
-  getTeams: async () => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation with localStorage persistence
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Get teams from localStorage
-        const storedTeams = JSON.parse(localStorage.getItem('maitri_teams') || '[]');
-        
-        // If no stored teams, use default mock teams
-        if (storedTeams.length === 0) {
-          const defaultTeams = [
-            {
-              id: 'team_1',
-              name: 'Web Development Team',
-              description: 'Building amazing web applications',
-              category: 'Web Development',
-              visibility: 'public',
-              maxMembers: 5,
-              location: 'Remote',
-              skills: ['React', 'Node.js', 'TypeScript'],
-              members: [
-                { id: 'user_1', name: 'Alex', email: 'alex@example.com' },
-                { id: 'user_2', name: 'Sarah', email: 'sarah@example.com' },
-                { id: 'user_3', name: 'Mike', email: 'mike@example.com' }
-              ],
-              admins: [],
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 'team_2',
-              name: 'AI/ML Research',
-              description: 'Exploring the future of artificial intelligence',
-              category: 'AI/ML',
-              visibility: 'private',
-              maxMembers: 8,
-              location: 'San Francisco, CA',
-              skills: ['Python', 'TensorFlow', 'PyTorch'],
-              members: [
-                { id: 'user_4', name: 'Emma', email: 'emma@example.com' },
-                { id: 'user_5', name: 'David', email: 'david@example.com' }
-              ],
-              admins: [],
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 'team_3',
-              name: 'Mobile App Development',
-              description: 'Creating innovative mobile experiences',
-              category: 'Mobile Apps',
-              visibility: 'public',
-              maxMembers: 6,
-              location: 'New York, NY',
-              skills: ['React Native', 'Flutter', 'iOS'],
-              members: [],
-              admins: [],
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 'team_4',
-              name: 'Ai Interns',
-              description: 'kjndjrfnljernfkrlemf;rlefn3kfer',
-              category: 'AI/ML',
-              visibility: 'public',
-              maxMembers: 10,
-              location: 'Remote',
-              skills: ['Machine Learning', 'Python', 'Data Analysis'],
-              members: [
-                { id: 'user_6', name: 'User 1', email: 'user1@example.com' },
-                { id: 'user_7', name: 'User 2', email: 'user2@example.com' },
-                { id: 'user_8', name: 'User 3', email: 'user3@example.com' },
-                { id: 'user_9', name: 'User 4', email: 'user4@example.com' },
-                { id: 'user_10', name: 'User 5', email: 'user5@example.com' }
-              ],
-              admins: [],
-              createdAt: new Date().toISOString()
-            }
-          ];
-          
-          // Store default teams in localStorage
-          localStorage.setItem('maitri_teams', JSON.stringify(defaultTeams));
-          resolve({ data: defaultTeams });
-        } else {
-          resolve({ data: storedTeams });
-        }
-      }, 500);
-    });
-  },
-
-  // Get team by ID
-  getTeam: async (id: string) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockTeam = {
-          id,
-          name: 'Sample Team',
-          description: 'A sample team for testing',
+  getTeams: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    visibility?: 'public' | 'private';
+  }) => {
+    try {
+      const response = await matriApi.get('/teams', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to fetch teams:', error);
+      // Fallback to mock data if API fails
+      const mockTeams = [
+        {
+          _id: 'team_1',
+          name: 'Web Development Team',
+          description: 'Building amazing web applications',
           category: 'Web Development',
           visibility: 'public',
           maxMembers: 5,
           location: 'Remote',
-          skills: ['React', 'Node.js'],
-          members: [],
-          admins: [],
+          skills: ['React', 'Node.js', 'TypeScript'],
+          memberCount: 3,
           createdAt: new Date().toISOString()
-        };
-        resolve({ data: mockTeam });
-      }, 300);
-    });
+        },
+        {
+          _id: 'team_2',
+          name: 'AI/ML Research',
+          description: 'Exploring the future of artificial intelligence',
+          category: 'AI/ML',
+          visibility: 'private',
+          maxMembers: 8,
+          location: 'San Francisco, CA',
+          skills: ['Python', 'TensorFlow', 'PyTorch'],
+          memberCount: 2,
+          createdAt: new Date().toISOString()
+        }
+      ];
+      
+      return { data: mockTeams, pagination: { total: mockTeams.length, page: 1, pages: 1 } };
+    }
+  },
+
+  // Get team by ID
+  getTeam: async (id: string) => {
+    try {
+      const response = await matriApi.get(`/teams/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to fetch team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch team');
+    }
   },
 
   // Update team
   updateTeam: async (id: string, data: any) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ data: { id, ...data, updatedAt: new Date().toISOString() } });
-      }, 500);
-    });
+    try {
+      const response = await matriApi.put(`/teams/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to update team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update team');
+    }
   },
 
   // Delete team
   deleteTeam: async (id: string) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ data: { success: true } });
-      }, 300);
-    });
+    try {
+      const response = await matriApi.delete(`/teams/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to delete team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to delete team');
+    }
   },
 
   // Join team
   joinTeam: async (teamId: string) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation with localStorage persistence
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Update team in localStorage
-        const storedTeams = JSON.parse(localStorage.getItem('maitri_teams') || '[]');
-        const teamIndex = storedTeams.findIndex((team: any) => team.id === teamId);
-        
-        if (teamIndex !== -1) {
-          // Add current user to team members (mock user)
-          const mockUser = {
-            id: 'user_' + Date.now(),
-            name: 'Current User',
-            email: 'user@example.com'
-          };
-          
-          if (!storedTeams[teamIndex].members) {
-            storedTeams[teamIndex].members = [];
-          }
-          
-          // Check if user is already a member
-          const isAlreadyMember = storedTeams[teamIndex].members.some((member: any) => member.id === mockUser.id);
-          
-          if (!isAlreadyMember) {
-            storedTeams[teamIndex].members.push(mockUser);
-            localStorage.setItem('maitri_teams', JSON.stringify(storedTeams));
-          }
-        }
-        
-        resolve({ data: { success: true, message: 'Joined team successfully' } });
-      }, 300);
-    });
+    try {
+      const response = await matriApi.post(`/teams/${teamId}/join`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to join team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to join team');
+    }
   },
 
   // Leave team
   leaveTeam: async (teamId: string) => {
-    // In embedded mode, users are already authenticated by main app
-    // No need to check for token since authentication is handled externally
-    
-    // Mock implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ data: { success: true, message: 'Left team successfully' } });
-      }, 300);
-    });
+    try {
+      const response = await matriApi.post(`/teams/${teamId}/leave`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to leave team:', error);
+      throw new Error(error.response?.data?.message || 'Failed to leave team');
+    }
   }
 };
 

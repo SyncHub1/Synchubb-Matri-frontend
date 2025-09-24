@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proxy Test</title>
+</head>
+<body>
+    <h1>Vite Proxy Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        async function testProxy() {
+            results.innerHTML = '<h2>Testing Proxy Configuration...</h2>';
+            
+            try {
+                // Test 1: Direct backend call (should fail due to CORS)
+                results.innerHTML += '<h3>Test 1: Direct Backend Call</h3>';
+                try {
+                    const directResponse = await fetch('http://localhost:3003/api/teams');
+                    results.innerHTML += `<p>✅ Direct call: ${directResponse.status}</p>`;
+                } catch (error) {
+                    results.innerHTML += `<p>❌ Direct call failed (expected): ${error.message}</p>`;
+                }
+                
+                // Test 2: Proxy call (should work)
+                results.innerHTML += '<h3>Test 2: Proxy Call</h3>';
+                try {
+                    const proxyResponse = await fetch('/api/teams');
+                    results.innerHTML += `<p>✅ Proxy call: ${proxyResponse.status}</p>`;
+                    const data = await proxyResponse.text();
+                    results.innerHTML += `<p>Response: ${data.substring(0, 200)}...</p>`;
+                } catch (error) {
+                    results.innerHTML += `<p>❌ Proxy call failed: ${error.message}</p>`;
+                }
+                
+                // Test 3: Health endpoint
+                results.innerHTML += '<h3>Test 3: Health Endpoint</h3>';
+                try {
+                    const healthResponse = await fetch('/health');
+                    results.innerHTML += `<p>✅ Health via proxy: ${healthResponse.status}</p>`;
+                } catch (error) {
+                    results.innerHTML += `<p>❌ Health via proxy failed: ${error.message}</p>`;
+                }
+                
+                // Test 4: Check current location
+                results.innerHTML += '<h3>Test 4: Current Location</h3>';
+                results.innerHTML += `<p>Current URL: ${window.location.href}</p>`;
+                results.innerHTML += `<p>Origin: ${window.location.origin}</p>`;
+                
+            } catch (error) {
+                results.innerHTML += `<p>❌ Test failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Run test when page loads
+        testProxy();
+        
+        // Add refresh button
+        const button = document.createElement('button');
+        button.textContent = 'Refresh Test';
+        button.onclick = testProxy;
+        document.body.appendChild(button);
+    </script>
+</body>
+</html>

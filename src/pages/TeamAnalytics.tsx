@@ -1,4 +1,6 @@
 import { Link, useParams } from "react-router-dom";
+import { useTeam, useTeamAnalytics } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 import { 
   ChevronLeft, 
   TrendingUp, 
@@ -22,6 +24,15 @@ import MobileNavigation from "@/components/MobileNavigation";
 
 const TeamAnalytics = () => {
   const { id } = useParams();
+
+  const { isSocketConnected } = useMatri();
+
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  const { data: analyticsData } = useTeamAnalytics(id || '');
+  
+  const team = teamData?.data;
+  const analytics = analyticsData?.data || {};
 
   const teamStats = {
     totalCodingHours: 142,

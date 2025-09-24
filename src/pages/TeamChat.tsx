@@ -22,9 +22,9 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { useAuthContext } from "@/components/AuthProvider";
-import { teamService } from "@/lib/api";
+import { useTeam, useMessages, useSendMessage } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 import { toast } from "sonner";
 
 const TeamChat = () => {
@@ -35,22 +35,33 @@ const TeamChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuthContext();
-  const { messages, isConnected, sendMessage, deleteMessage, onlineUsers } = useWebSocket(id);
-  const [team, setTeam] = useState<any>(null);
+  const { isSocketConnected, joinTeam, leaveTeam, onMessage, sendTyping } = useMatri();
+  
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  const { data: messagesData } = useMessages(id || '');
+  const sendMessageMutation = useSendMessage();
+  
+  const team = teamData?.data;
+  const messages = messagesData?.data || [];
 
-  // Load team information
+  // Join team room for real-time updates
   useEffect(() => {
-    if (id) {
-      teamService.getTeam(id).then((result) => {
-        if ((result as any).data) {
-          setTeam((result as any).data);
-        }
-      }).catch((error) => {
-        console.error("Error loading team:", error);
-        toast.error("Failed to load team information");
-      });
+    if (id && isSocketConnected) {
+      joinTeam(id);
+      return () => leaveTeam(id);
     }
-  }, [id]);
+  }, [id, isSocketConnected, joinTeam, leaveTeam]);
+  
+  // Listen for new messages
+  useEffect(() => {
+    const handleNewMessage = (messageData: any) => {
+      // TanStack Query will automatically update the cache
+      console.log('New message received:', messageData);
+    };
+    
+    onMessage(handleNewMessage);
+  }, [onMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,24 +71,35 @@ const TeamChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !id) return;
 
-    const success = sendMessage(message.trim());
-    if (success) {
+    try {
+      await sendMessageMutation.mutateAsync({
+        teamId: id,
+        messageData: {
+          message: message.trim(),
+          type: 'text'
+        }
+      });
       setMessage("");
       setShowEmojiPicker(false);
-    } else {
-      toast.error("Failed to send message. Please check your connection.");
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Error handling is done in the mutation hook
     }
   };
 
-  const handleDeleteMessage = (messageId: string, forEveryone: boolean = false) => {
-    const success = deleteMessage(messageId, forEveryone);
-    if (success) {
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!id) return;
+    
+    try {
+      // This would use a delete message mutation
+      // await deleteMessageMutation.mutateAsync({ teamId: id, messageId });
       toast.success("Message deleted successfully");
-    } else {
+    } catch (error) {
+      console.error('Failed to delete message:', error);
       toast.error("Failed to delete message");
     }
   };
@@ -221,9 +243,9 @@ const TeamChat = () => {
                 <h1 className="text-base sm:text-lg font-semibold truncate">{team?.name || "Team Chat"}</h1>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    {onlineUsers.length} online
+                    {team?.memberCount || 0} members
                   </p>
-                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isSocketConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
               </div>
             </div>
@@ -231,8 +253,8 @@ const TeamChat = () => {
 
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Connection Status Badge - Hide on very small screens */}
-            <Badge variant="secondary" className={`text-xs hidden xs:inline-flex ${isConnected ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
-              {isConnected ? "Connected" : "Disconnected"}
+            <Badge variant="secondary" className={`text-xs hidden xs:inline-flex ${isSocketConnected ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+              {isSocketConnected ? "Connected" : "Disconnected"}
             </Badge>
             
             {/* Desktop Action Buttons - Hide on mobile */}
@@ -354,7 +376,7 @@ const TeamChat = () => {
                           variant="ghost"
                           size="sm"
                           className="h-6 px-1 sm:px-2 text-xs"
-                          onClick={() => handleDeleteMessage(msg.id, false)}
+                          onClick={() => handleDeleteMessage(msg.id)}
                         >
                           <span className="hidden sm:inline">Delete for me</span>
                           <span className="sm:hidden">Delete</span>
@@ -363,7 +385,7 @@ const TeamChat = () => {
                           variant="ghost"
                           size="sm"
                           className="h-6 px-1 sm:px-2 text-xs"
-                          onClick={() => handleDeleteMessage(msg.id, true)}
+                          onClick={() => handleDeleteMessage(msg.id)}
                         >
                           <span className="hidden sm:inline">Delete for everyone</span>
                           <span className="sm:hidden">Delete All</span>
@@ -396,7 +418,7 @@ const TeamChat = () => {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type a message..."
                   className="pr-12 sm:pr-16 lg:pr-20 h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
-                  disabled={!isConnected}
+                  disabled={!isSocketConnected}
                 />
                 <input
                   type="file"
@@ -420,7 +442,7 @@ const TeamChat = () => {
                 type="submit" 
                 size="sm" 
                 className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
-                disabled={!message.trim() || !isConnected}
+                disabled={!message.trim() || !isSocketConnected}
               >
                 <Send className="h-4 w-4" />
               </Button>

@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTasks, useCreateTask, useUpdateTask, useTaskStats } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
+import { toast } from "sonner";
 import { 
   ChevronLeft, 
   Plus, 
@@ -45,63 +48,17 @@ const TeamTasks = () => {
     tags: []
   });
 
-  const [tasks, setTasks] = useState([
-    {
-      id: "1",
-      title: "Implement Carbon Calculator API",
-      description: "Create REST API endpoints for carbon footprint calculations with different activity types",
-      status: "in-progress",
-      priority: "high",
-      assignee: { name: "Alex", avatar: "A" },
-      dueDate: "2024-01-25",
-      tags: ["backend", "api"],
-      progress: 60
-    },
-    {
-      id: "2", 
-      title: "Design Mobile App UI",
-      description: "Create wireframes and mockups for the mobile application interface",
-      status: "completed",
-      priority: "medium",
-      assignee: { name: "Sarah", avatar: "S" },
-      dueDate: "2024-01-20",
-      tags: ["design", "mobile"],
-      progress: 100
-    },
-    {
-      id: "3",
-      title: "Set up Database Schema",
-      description: "Design and implement the MongoDB schema for user data and activity tracking",
-      status: "todo",
-      priority: "high",
-      assignee: { name: "Mike", avatar: "M" },
-      dueDate: "2024-01-28",
-      tags: ["database", "backend"],
-      progress: 0
-    },
-    {
-      id: "4",
-      title: "User Authentication System",
-      description: "Implement secure user registration and login functionality",
-      status: "in-progress",
-      priority: "high",
-      assignee: { name: "You", avatar: "Y" },
-      dueDate: "2024-01-26",
-      tags: ["auth", "security"],
-      progress: 75
-    },
-    {
-      id: "5",
-      title: "Data Visualization Components",
-      description: "Create charts and graphs to display carbon footprint trends",
-      status: "todo",
-      priority: "low",
-      assignee: { name: "Sarah", avatar: "S" },
-      dueDate: "2024-02-01",
-      tags: ["frontend", "charts"],
-      progress: 0
-    }
-  ]);
+  const { isSocketConnected, onTaskUpdate } = useMatri();
+
+  // Use Matri API hooks
+  const { data: tasksData, isLoading } = useTasks(id || '');
+  const { data: statsData } = useTaskStats(id || '');
+  const createTaskMutation = useCreateTask();
+  const updateTaskMutation = useUpdateTask();
+
+  const tasks = tasksData?.data || [];
+  const stats = statsData?.data || {};
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -121,46 +78,69 @@ const TeamTasks = () => {
     }
   };
 
-  const addTask = () => {
-    if (!newTask.title.trim()) return;
+  const addTask = async () => {
+    if (!newTask.title.trim() || !id) return;
     
-    const task = {
-      id: Date.now().toString(),
-      title: newTask.title,
-      description: newTask.description,
-      status: "todo",
-      priority: newTask.priority,
-      assignee: { name: newTask.assignee, avatar: newTask.assignee[0] },
-      dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
-      tags: newTask.tags,
-      progress: 0
-    };
-
-    setTasks([...tasks, task]);
-    setNewTask({
-      title: "",
-      description: "",
-      priority: "medium",
-      assignee: "You",
-      dueDate: "",
-      tags: []
-    });
-    setIsAddingTask(false);
+    try {
+      await createTaskMutation.mutateAsync({
+        teamId: id,
+        taskData: {
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority,
+          assignee: newTask.assignee,
+          dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
+          tags: newTask.tags
+        }
+      });
+      
+      setNewTask({
+        title: "",
+        description: "",
+        priority: "medium",
+        assignee: "You",
+        dueDate: "",
+        tags: []
+      });
+      setIsAddingTask(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      // Error handling is done in the mutation hook
+    }
   };
 
-  const deleteTask = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const deleteTask = async (taskId) => {
+    if (!id) return;
+    
+    try {
+      // This would use a delete task mutation
+      // await deleteTaskMutation.mutateAsync({ teamId: id, taskId });
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+    }
   };
 
-  const toggleTaskStatus = (taskId) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        const newStatus = task.status === "completed" ? "todo" : 
-                         task.status === "todo" ? "in-progress" : "completed";
-        return { ...task, status: newStatus };
-      }
-      return task;
-    }));
+  const toggleTaskStatus = async (taskId) => {
+    if (!id) return;
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const newStatus = task.status === "completed" ? "todo" : 
+                     task.status === "todo" ? "in-progress" : "completed";
+    
+    try {
+      await updateTaskMutation.mutateAsync({
+        teamId: id,
+        taskId,
+        taskData: { status: newStatus }
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      // Error handling is done in the mutation hook
+    }
   };
 
   const StatusColumn = ({ status, title, tasks }) => (

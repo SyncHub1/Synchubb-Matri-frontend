@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTeam, useVideoCall, useJoinCall, useLeaveCall } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
+import { toast } from "sonner";
 import { 
   ChevronLeft, 
   Video, 
@@ -28,6 +31,17 @@ const TeamVideo = () => {
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  
+  const { isSocketConnected, joinVideoCall, leaveVideoCall, onParticipantUpdate } = useMatri();
+  
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  const { data: videoCallData } = useVideoCall(id || '');
+  const joinCallMutation = useJoinCall();
+  const leaveCallMutation = useLeaveCall();
+  
+  const team = teamData?.data;
+  const videoCall = videoCallData?.data;
 
   const participants = [
     { 

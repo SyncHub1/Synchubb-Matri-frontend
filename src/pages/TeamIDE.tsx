@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTeam } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
+import { toast } from "sonner";
 import { 
   ChevronLeft, 
   Play, 
@@ -50,17 +53,26 @@ import { EnhancedTerminal } from "@/components/ide/EnhancedTerminal";
 import { FileExplorer } from "@/components/ide/FileExplorer";
 import { EnvironmentSetup } from "@/components/ide/EnvironmentSetup";
 import { GitHubIntegration } from "@/components/ide/GitHubIntegration";
-import { toast } from "@/hooks/use-toast";
 
 const TeamIDE = () => {
   const { id } = useParams();
-  const [activeFile, setActiveFile] = useState("app.js");
-  const [terminalExpanded, setTerminalExpanded] = useState(false);
-  const [showFileExplorer, setShowFileExplorer] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(false);
-  const [activeTab, setActiveTab] = useState("editor");
-  const [editorTheme, setEditorTheme] = useState("vs-dark");
-  const [selectedTemplate, setSelectedTemplate] = useState("react");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+  const [output, setOutput] = useState("");
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
+  const [activeTab, setActiveTab] = useState("files");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
+  
+  const { isSocketConnected, joinIDESession, leaveIDESession, onCodeChange } = useMatri();
+  
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  
+  const team = teamData?.data;
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [selectedTechStack, setSelectedTechStack] = useState("react");
   const [previewUrl, setPreviewUrl] = useState("http://localhost:8080");
@@ -68,7 +80,7 @@ const TeamIDE = () => {
   const [showEnvironmentSetup, setShowEnvironmentSetup] = useState(false);
   const [environmentReady, setEnvironmentReady] = useState(false);
   const editorRef = useRef(null);
-  const [code, setCode] = useState(`// Welcome to SyncHubb Team IDE
+  const [ideCode, setIdeCode] = useState(`// Welcome to SyncHubb Team IDE
 // Collaborative coding environment for your team
 
 import React, { useState, useEffect } from 'react';
@@ -115,6 +127,12 @@ const EcoTracker = () => {
 };
 
 export default EcoTracker;`);
+
+  const [activeFile, setActiveFile] = useState('app.js');
+  const [terminalExpanded, setTerminalExpanded] = useState(false);
+  const [showFileExplorer, setShowFileExplorer] = useState(false);
+  const [editorTheme, setEditorTheme] = useState('vs-dark');
+  const [selectedTemplate, setSelectedTemplate] = useState('react');
 
   const files = [
     { 
@@ -179,19 +197,13 @@ export default EcoTracker;`);
   const runCode = () => {
     console.log("Running code...");
     setTerminalExpanded(true);
-    toast({
-      title: "Code execution started",
-      description: "Your code is being compiled and executed.",
-    });
+    toast.success("Code execution started - Your code is being compiled and executed.");
   };
 
   const saveFile = () => {
     console.log("Saving file:", activeFile);
     localStorage.setItem(`ide_file_${activeFile}`, code);
-    toast({
-      title: "File saved",
-      description: `${activeFile} has been saved successfully.`,
-    });
+    toast.success(`File saved - ${activeFile} has been saved successfully.`);
   };
 
   const handleFileSelect = (file: any) => {
@@ -208,18 +220,12 @@ export default EcoTracker;`);
   };
 
   const deployProject = () => {
-    toast({
-      title: "Deployment started",
-      description: "Your project is being deployed to production.",
-    });
+    toast.success("Deployment started - Your project is being deployed to production.");
   };
 
   const openAIAssistant = () => {
     setIsAiAssistantOpen(true);
-    toast({
-      title: "AI Assistant activated",
-      description: "Ask me anything about your code!",
-    });
+    toast.success("AI Assistant activated - Ask me anything about your code!");
   };
 
   useEffect(() => {
@@ -290,10 +296,7 @@ export default EcoTracker;`);
             onFilesGenerated={(files) => {
               console.log('Files generated:', files);
               // In real implementation, these would be added to the file explorer
-              toast({
-                title: "Files generated",
-                description: `${files.length} starter files created for ${selectedTechStack}`,
-              });
+              toast.success(`Files generated - ${files.length} starter files created for ${selectedTechStack}`);
             }}
           />
         )}

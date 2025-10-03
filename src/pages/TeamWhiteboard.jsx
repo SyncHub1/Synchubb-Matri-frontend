@@ -15,7 +15,8 @@ import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
 import { LayersList } from "@/components/whiteboard/LayersList";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTeam, useWhiteboard, useSaveWhiteboard } from "@/hooks/useMatriApi";
+import { useMatri, MatriConnectionStatus } from "@/contexts/MatriContext";
 
 const TeamWhiteboard = () => {
   const { id } = useParams();
@@ -32,79 +33,17 @@ const TeamWhiteboard = () => {
   const [fontSize, setFontSize] = useState(28);
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const {theme, setTheme} = useTheme(); 
-  const baseColors = [
-    "#000000",
-    "#374151",
-    "#6B7280",
-    "#9CA3AF",
-    "#D1D5DB",
-    "#F3F4F6",
-    "#FFFFFF",
-    "#DC2626",
-    "#EA580C",
-    "#D97706",
-    "#CA8A04",
-    "#65A30D",
-    "#16A34A",
-    "#059669",
-    "#0891B2",
-    "#0284C7",
-    "#2563EB",
-    "#4F46E5",
-    "#7C3AED",
-    "#A855F7",
-    "#C026D3",
-    "#E11D48",
-  ];
 
-  const darkColors = [
-    "#000000",
-    "#1f2937",
-    "#4b5563",
-    "#6b7280",
-    "#9ca3af",
-    "#d1d5db",
-    "#e5e7eb",
-    "#991b1b",
-    "#9a3412",
-    "#92400e",
-    "#854d0e",
-    "#3f6212",
-    "#166534",
-    "#065f46",
-    "#075985",
-    "#1e3a8a",
-    "#1e40af",
-    "#3730a3",
-    "#5b21b6",
-    "#7e22ce",
-    "#9d174d",
-  ];
+  const { isSocketConnected, joinWhiteboard, leaveWhiteboard, onWhiteboardUpdate } = useMatri();
 
-  const lightColors = [
-    "#262626",
-    "#6b7280",
-    "#9ca3af",
-    "#d1d5db",
-    "#e5e7eb",
-    "#f3f4f6",
-    "#ffffff",
-    "#f87171",
-    "#fb923c",
-    "#fbbf24",
-    "#facc15",
-    "#a3e635",
-    "#4ade80",
-    "#34d399",
-    "#22d3ee",
-    "#60a5fa",
-    "#818cf8",
-    "#a5b4fc",
-    "#c4b5fd",
-    "#d8b4fe",
-    "#f472b6",
-  ];
+  // Use Matri API hooks
+  const { data: teamData } = useTeam(id || '');
+  const { data: whiteboardData } = useWhiteboard(id || '');
+  const saveWhiteboardMutation = useSaveWhiteboard();
+
+  const team = teamData?.data;
+  const whiteboard = whiteboardData?.data;
+
   // Current user for collaboration
   const currentUser = {
     id: "current-user",

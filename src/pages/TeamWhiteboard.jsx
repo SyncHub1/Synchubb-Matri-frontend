@@ -6,10 +6,13 @@ import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
 import { Toolbar } from "@/components/whiteboard/Toolbar";
 import { ColorPicker } from "@/components/whiteboard/ColorPicker";
 import { StrokeControls } from "@/components/whiteboard/StrokeControls";
+import { SizeControls } from "@/components/whiteboard/SizeControls"
+import { FontControls } from "@/components/whiteboard/FontControls"
 import { CollaboratorCursors } from "@/components/whiteboard/CollaboratorCursors";
 import { ThemeToggle } from "@/components/whiteboard/ThemeToggle";
 import { WhiteboardMenu } from "@/components/whiteboard/WhiteboardMenu";
 import { CollaborationPanel } from "@/components/whiteboard/CollaborationPanel";
+import { LayersList } from "@/components/whiteboard/LayersList";
 import { toast } from "sonner";
 import { ChevronLeft, Menu, X } from "lucide-react";
 import { useTeam, useWhiteboard, useSaveWhiteboard } from "@/hooks/useMatriApi";
@@ -19,8 +22,15 @@ const TeamWhiteboard = () => {
   const { id } = useParams();
   const [fabricCanvas, setFabricCanvas] = useState(null);
   const [selectedTool, setSelectedTool] = useState("select");
-  const [selectedColor, setSelectedColor] = useState("#000000");
+  const [selectedColor, setSelectedColor] = useState("#000000")
+  const [selectedObject, setSelectedObject] = useState(null);
   const [brushSize, setBrushSize] = useState(3);
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
+  const [diameter, setDiameter] = useState("");
+  const [strokeColor, setStrokeColor] = useState("");  
+  const [fillColor, setFillColor] = useState("");
+  const [fontSize, setFontSize] = useState(28);
   const [zoom, setZoom] = useState(100);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
@@ -133,7 +143,7 @@ const TeamWhiteboard = () => {
       }
 
       // Delete selected objects
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === 'Delete') {
         const activeObjects = fabricCanvas?.getActiveObjects();
         if (activeObjects && activeObjects.length > 0) {
           activeObjects.forEach(obj => fabricCanvas.remove(obj));
@@ -145,14 +155,16 @@ const TeamWhiteboard = () => {
 
       // Tool shortcuts
       const toolShortcuts = {
-        '1': 'select',
-        '2': 'hand', 
-        '3': 'rectangle',
-        '4': 'circle',
-        '5': 'arrow',
-        '6': 'line',
-        '7': 'pen',
-        '8': 'text'
+        1: "select",
+        2: "hand",
+        3: "rectangle",
+        4: "circle",
+        5: "triangle",
+        6: "single-arrow",
+        7: "double-arrow",
+        8: "line",
+        9: "pen",
+        0: "text",
       };
 
       if (toolShortcuts[e.key]) {
@@ -160,9 +172,78 @@ const TeamWhiteboard = () => {
       }
     };
 
+    if (fabricCanvas) {
+        fabricCanvas.on("selection:created", (event) => {
+            handleObjectSelection(event.selected[0]);
+        });
+        fabricCanvas.on("selection:updated", (event) => {
+            handleObjectSelection(event.selected[0]);
+        });
+        fabricCanvas.on("selection:cleared", (event) => {
+            setSelectedObject(null);
+            clearSettings();
+            setSelectedTool("select");
+        });
+        fabricCanvas.on("object:modified", (event) => {
+            handleObjectSelection(event.target);
+        });
+        fabricCanvas.on("object:scaling", (event) => {
+            handleObjectSelection(event.target);
+        });
+        }
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    
   }, [fabricCanvas]);
+
+
+    const handleObjectSelection = (object) => {
+        if (!object) return;
+        console.log(object.id);
+        setSelectedObject(object);
+        if (object.type === 'rect') {
+            setWidth(Math.round(object.width * object.scaleX));
+            setHeight(Math.round(object.height * object.scaleY));
+            setStrokeColor(object.stroke);
+            setFillColor(object.fill);
+            setDiameter("");
+        } else if (object.type === 'circle'){
+            setDiameter(Math.round(object.radius * 2 * object.scaleX));
+            setStrokeColor(object.stroke);
+            setFillColor(object.fill);
+            setWidth("");
+            setHeight("");
+        }  else if (object.type === 'line'){
+            setWidth("");
+            setStrokeColor(object.stroke);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === 'group'){
+            setWidth("");
+            setFillColor(object.fill);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === 'path'){
+            setWidth("");
+            setStrokeColor(object.stroke);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === 'i-text'){
+            setWidth("");
+            setFillColor(object.fill);
+            setStrokeColor(object.stroke);
+            setHeight("");
+            setDiameter("");
+        } else if (object.type === "triangle") {
+            setWidth(Math.round(object.width * object.scaleX));
+            setHeight(Math.round(object.height * object.scaleY));
+            setStrokeColor(object.stroke); 
+            setFillColor(object.fill);
+            setDiameter("");
+}
+    };    
+
 
   // Simulate collaborative cursor movement
   useEffect(() => {
@@ -172,9 +253,112 @@ const TeamWhiteboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const clearSettings = () => {
+        setWidth("");
+        setHeight("");
+        setStrokeColor("");
+        setFillColor("");
+        setDiameter("");
+    };
+  
   const handleCanvasReady = (canvas) => {
     setFabricCanvas(canvas);
   };
+
+  const handleBrushSizeChange = (e) => {
+    const value = e.target.value;
+    setBrushSize(value)
+    fabricCanvas.renderAll();
+  }
+
+  const handleFontSizeChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setFontSize(IntValue);
+    if (selectedObject) {
+      selectedObject.set({fontSize: IntValue});
+      fabricCanvas.requestRenderAll();
+    }
+  }
+
+  const handleWidthChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setWidth(IntValue);
+    selectedObject.set({width: IntValue / selectedObject.scaleX});
+
+    if(!selectedObject || IntValue <=0 ) return;
+
+    if (selectedObject.type === "rect" || selectedObject.type === "line") {
+        selectedObject.set({width: IntValue / selectedObject.scaleX});
+    } else if (selectedObject.type === "group") {
+      setArrowWidth(selectedObject, IntValue);
+    };
+
+    fabricCanvas.requestRenderAll();
+  };
+
+  const handleHeightChange = (e) => {
+    const value = e.target.value.replace(/,/g, "");
+    const IntValue = parseInt(value, 10)
+    setHeight(IntValue);
+    if (selectedObject && selectedObject.type === "rect" && IntValue >= 0) {
+        selectedObject.set({height: IntValue / selectedObject.scaleY});
+        fabricCanvas.renderAll();
+    }  
+  }
+
+  const handleDiameterChange = (e) => {
+      const value = e.target.value.replace(/,/g, "");
+      const IntValue = parseInt(value, 10)
+      setDiameter(IntValue);
+      if (selectedObject && selectedObject.type === "circle" && IntValue >= 0) {
+          selectedObject.set({radius: IntValue / 2 / selectedObject.scaleX});
+          fabricCanvas.renderAll();
+      }           
+  };
+
+  const handleStrokeColorChange = (color) => {
+      const value = color;
+      console.log(selectedObject);
+      setStrokeColor(value);
+      if (selectedObject) {
+          selectedObject.set({stroke: value});
+          fabricCanvas.renderAll();
+      }
+  };  
+
+    const handleFillColorChange = (color) => {
+      const value = color;
+      setFillColor(value);
+      if (selectedObject) {
+          selectedObject.set({fill: value});
+          fabricCanvas.renderAll();
+      }
+  };  
+
+  const handleGroupnTextColorChange = (color) => {
+      setStrokeColor(color);
+      if (selectedObject && selectedObject.type === 'group') {
+        if (selectedObject.label === 'single-arrow'){
+          const head = selectedObject.item(1);
+          const line = selectedObject.item(0);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+        } else if (selectedObject.label === 'double-arrow'){
+          const head = selectedObject.item(0);
+          const line = selectedObject.item(1);
+          const head2 = selectedObject.item(2);
+          head.set({ fill: color });
+          line.set({ stroke: color });
+          head2.set({ fill: color });     
+        }
+      } else {
+        selectedObject.set({stroke: color});
+        console.log(selectedObject);
+      }
+      fabricCanvas.renderAll();
+  };   
 
   const handleExportImage = () => {
     if (!fabricCanvas) return;
@@ -202,14 +386,37 @@ const TeamWhiteboard = () => {
     toast.success("Canvas cleared!");
   };
 
-  const handleImageUpload = (file) => {
-    if (!fabricCanvas) return;
+  const uploadImageToCloudinary = async (file) => {
+    if (!file) return;
 
+    const data = new FormData();
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+    data.append("file", file);
+    data.append("upload_preset", uploadPreset)
+    data.append("cloud_name", cloudName)
+ 
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: data
+    });
+
+    const uploadRes = await res.json();
+    const uploadedImageUrl = uploadRes.url;
+    toast.success("Image uploaded successfully!");
+    return uploadedImageUrl;
+
+  }
+
+  const handleImageUpload = async (file) => {
+    if (!fabricCanvas) return;
+    const uploadedImageUrl = await uploadImageToCloudinary(file);
+    console.log(uploadedImageUrl);
     const reader = new FileReader();
     reader.onload = (event) => {
       const imgElement = new Image();
       imgElement.onload = () => {
-        FabricImage.fromURL(event.target.result).then((img) => {
+        FabricImage.fromURL(uploadedImageUrl).then((img) => {
           const canvasWidth = fabricCanvas.getWidth();
           const canvasHeight = fabricCanvas.getHeight();
           const maxWidth = canvasWidth * 0.3;
@@ -316,6 +523,7 @@ const TeamWhiteboard = () => {
           <Toolbar 
             selectedTool={selectedTool} 
             onToolSelect={setSelectedTool} 
+            onImageUpload={handleImageUpload}
           />
         </div>
       </div>
@@ -333,16 +541,42 @@ const TeamWhiteboard = () => {
       </div>
 
       {/* Color & Stroke Controls - Appears below main toolbar when tool selected */}
-      {selectedTool !== "select" && selectedTool !== "hand" && (
+      {(selectedTool !== "hand" && selectedObject !== null) && (
         <div className="fixed z-40 flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 top-28 lg:top-20 left-1/2 transform -translate-x-1/2">
-          <ColorPicker 
+          <SizeControls 
+            selectedObject={selectedObject}
+            selectedTool={selectedTool}
+            handleWidthChange={handleWidthChange} 
+            handleHeightChange={handleHeightChange} 
+            handleDiameterChange={handleDiameterChange}
+            height={height} 
+            width={width}
+            diameter={diameter}/>
+          <ColorPicker
+            darkColors={darkColors}
+            lightColors={lightColors}
+            baseColors={baseColors}
+            selectedObject={selectedObject} 
             selectedColor={selectedColor}
-            onColorSelect={setSelectedColor}
+            selectedTool={selectedTool}
+            handleStrokeColorChange={handleStrokeColorChange}
+            handleFillColorChange={handleFillColorChange}
+            handleGroupnTextColorChange={handleGroupnTextColorChange}
+            strokeColor={strokeColor}
+            fillColor={fillColor}
           />
           <StrokeControls 
+            selectedObject={selectedObject}
+            selectedTool={selectedTool}
             brushSize={brushSize}
-            onBrushSizeChange={setBrushSize}
+            setBrushSize={setBrushSize}
           />
+          <FontControls
+            selectedTool={selectedTool}
+            selectedObject={selectedObject}
+            fontSize={fontSize}
+            handleFontSizeChange={handleFontSizeChange}
+            />
         </div>
       )}
 
@@ -383,10 +617,18 @@ const TeamWhiteboard = () => {
       {/* Main Canvas */}
       <div className="absolute inset-0 top-16 lg:top-0">
         <WhiteboardCanvas
+          darkColors={darkColors}
+          lightColors={lightColors}
+          baseColors={baseColors}
           selectedTool={selectedTool}
-          selectedColor={selectedColor}
+          strokeColor={strokeColor}
+          fillColor={fillColor}
           brushSize={brushSize}
           zoom={zoom}
+          fontSize={fontSize}
+          clearSettings={clearSettings}
+          setSelectedTool={setSelectedTool}
+          setStrokeColor={setStrokeColor}
           onCanvasReady={handleCanvasReady}
           onImageUpload={handleImageUpload}
         />
@@ -394,7 +636,13 @@ const TeamWhiteboard = () => {
         {/* Collaborative Cursors */}
         <CollaboratorCursors collaborators={collaborators} />
       </div>
-
+       {/* Layers List */}
+      <div>
+        <LayersList 
+            fabricCanvas={fabricCanvas}
+        />
+       </div>
+        
       {/* Welcome Message - Center */}
       {fabricCanvas && fabricCanvas.getObjects().length === 0 && (
         <div className="absolute inset-0 top-16 lg:top-0 flex items-center justify-center pointer-events-none">

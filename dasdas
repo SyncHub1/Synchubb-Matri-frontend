@@ -1,0 +1,169 @@
+[33mcommit 89b43acd053777b20ca6f29adb7e468b360db133[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/whiteboard[m[33m)[m
+Author: Dharani I S <ponnidharani@gmail.com>
+Date:   Fri Aug 29 19:55:27 2025 +0530
+
+    chore: add jsx files to tailwind config
+
+[33mcommit 7957b43d5933e00e689fd1417f7790ed78365b43[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/feat/whiteboard[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Merge: 6f5ec3c 1e65b8a
+Author: Divyansh <divyanshuchannel2@gmail.com>
+Date:   Tue Aug 12 02:03:00 2025 +0530
+
+    Merge pull request #3 from DivyanshuRanjanDynamic/main
+    
+    feat: Add frontend components for IDE features
+
+[33mcommit 1e65b8ac7a978d386c5b93df10cc3895599adfd8[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Mon Aug 11 20:22:36 2025 +0000
+
+    feat: Add frontend components for IDE features
+    
+    This commit adds the frontend components for auto environment setup and GitHub push integration in the code editor. It includes UI elements for language/tech stack selection and a "Push to GitHub" button.
+
+[33mcommit 6f5ec3cc54ab6116059ad0790d99c4306fcaf939[m
+Merge: 1d11c27 2a17c9a
+Author: Divyansh <divyanshuchannel2@gmail.com>
+Date:   Sun Aug 10 13:47:16 2025 +0530
+
+    Merge pull request #2 from DivyanshuRanjanDynamic/main
+    
+    Code Editor Enhancements
+
+[33mcommit 2a17c9a66ecd1f250cb9f7729609b8c608815192[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Sun Aug 10 08:10:13 2025 +0000
+
+    Add code editor enhancements
+    
+    Add dark/light mode, custom file explorer, enhanced Monaco editor with AI autocomplete, and language/tech stack selection to the code editor.
+
+[33mcommit 2d86ad94d29688be047ffb44adbd1b71d24976e8[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Sun Aug 10 07:58:40 2025 +0000
+
+    Refactor: Enhance Code Editor Section
+    
+    Incorporate features and design elements from the vibecode-playground repository to enhance the code editor section. This includes improving the overall user experience and functionality of the code editor.
+
+[33mcommit 1d11c2738814a2a83b35bdc3f0c9f9c715d319ab[m
+Merge: 093b0a5 d04d249
+Author: Divyansh <divyanshuchannel2@gmail.com>
+Date:   Sun Aug 3 06:12:24 2025 +0530
+
+    Merge pull request #1 from DivyanshuRanjanDynamic/main
+    
+    Refactor TeamChat, TeamIDE, TeamTasks, and TeamWhiteboard components for improved mobile responsiveness
+
+[33mcommit d04d24980a14103ae6895ea388059fd38f50f1a5[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sun Aug 3 06:10:19 2025 +0530
+
+    c
+
+[33mcommit 093b0a594738045d11522aeff02a96e8d250f0f8[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sun Aug 3 04:16:08 2025 +0530
+
+    Enhance CORS configuration and update health check page
+    
+    - Added `VITE_CLIENT_URL` to `.env` for improved service URL management.
+    - Updated `vercel.json` to specify detailed CORS headers for API requests.
+    - Enhanced Vite configuration to include comprehensive CORS settings for both development and production environments.
+    - Refactored the `Health` component to display service status and CORS configuration details.
+    - Introduced a new utility in `cors.ts` for managing CORS origins and headers dynamically.
+
+[33mcommit 5a7242127072257903b788a309a1c3e28be7bf72[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 15:08:46 2025 +0530
+
+    Update Vite configuration to restrict CORS origins for development
+    
+    - Modified the 'Access-Control-Allow-Origin' header to allow requests only from 'http://localhost:5173' and 'https://www.synchubb.in', enhancing security during development.
+
+[33mcommit 1853a33c23a08c74e15d174e8895c995081c63c2[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 14:26:34 2025 +0530
+
+    Update Vite configuration to change server port and enhance build settings
+    
+    - Changed the Vite server port from 5173 to 5175 for consistency.
+    - Added build configuration specifying output directory, sourcemaps, and manual chunking for vendor and UI libraries.
+
+[33mcommit 46bf149f8808a755909c76a7255ef5e6d7996b26[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 11:33:07 2025 +0530
+
+    Refactor environment configuration and clean up unused files
+    
+    - Updated `.env` and `env.example` to streamline service URL management and removed deprecated variables.
+    - Enhanced Vite configuration to include CORS headers for development and adjusted server settings.
+    - Removed the `vercel.json` and `useMedia.ts` files to eliminate unused code and improve project clarity.
+    - Updated API handling in `api.ts` to simplify base URL management and improve error handling.
+
+[33mcommit 518803ddbec1a500f80ef3bc8ad890d9a2da65d4[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 02:25:21 2025 +0530
+
+    Update Vite configuration for server and build settings
+    
+    - Changed the Vite server port from 8080 to 5173 and removed CORS headers for a simplified setup.
+    - Added build configuration with output directory, sourcemaps, and manual chunking for vendor and UI libraries.
+    - Configured preview settings to use the same port and enabled host access.
+
+[33mcommit aa5944423602e512eec9ade810adb8fd9b7b87db[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 01:54:56 2025 +0530
+
+    Add CORS headers to Vite server configuration
+    
+    - Introduced CORS headers in the Vite server configuration to allow cross-origin requests from 'https://www.synchubb.in'.
+    - Specified allowed methods and headers to enhance API accessibility and security during development.
+
+[33mcommit 1db26414e38a6fc235d143c011e7e7d7191b9a77[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 01:30:48 2025 +0530
+
+    Update environment configuration and enhance Maitri integration
+    
+    - Added `VITE_MAITRI_URL` to `.env` and `env.example` for consistent service URL management.
+    - Refactored `MaitriIframe.jsx` to dynamically determine the Maitri service URL based on the environment.
+    - Improved API base URL handling in `api.ts` for better production detection and logging.
+    - Removed the obsolete `CORS_ERROR_RESOLUTION.md` file to streamline documentation.
+
+[33mcommit 406cfeb56f085c6e597cf4f3098fb5334170b3d6[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 01:15:28 2025 +0530
+
+    Enhance environment configuration and API handling
+    
+    - Updated `env.example` to include production API service URLs and added CORS configuration options.
+    - Refactored API base URL handling in `api.ts` to dynamically switch between production and development environments.
+    - Improved axios instance creation to include CORS headers for cross-origin requests.
+    - Enhanced error handling for CORS issues in API response interceptors.
+
+[33mcommit b7e31da290669828602b1f0697d55454c4c76c72[m
+Author: DivyanshuRanjanDynamic <divyanshuchannel2@gmail.com>
+Date:   Sat Aug 2 00:11:35 2025 +0530
+
+    matri section added
+
+[33mcommit bd223bfcd4cdd02e85ea155bd976b1ce0bafdaa0[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Thu Jul 31 15:54:34 2025 +0000
+
+    Reverted to commit 50eddf39bf5bebc5149294eabade9dcb70dc6af8
+
+[33mcommit 7071ed1336c97e651005bd7291a32cf4fb121852[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Thu Jul 31 06:08:46 2025 +0000
+
+    Fix remaining TypeScript errors
+    
+    The AI has fixed all remaining TypeScript syntax errors in the JavaScript files. This includes removing type annotations from function parameters in `CreateTeam.jsx` and updating the integration guide to reflect the changes.
+
+[33mcommit d9f0a5fec1afc22f2c6685ce25bad63abd97a577[m
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Thu Jul 31 06:07:39 2025 +0000
+
+    Fix: Remove TypeScript syntax in T

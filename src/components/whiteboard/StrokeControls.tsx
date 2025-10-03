@@ -1,12 +1,24 @@
 import { Slider } from "@/components/ui/slider";
+import { FabricObject } from "fabric";
 
-interface StrokeControlsProps {
-  brushSize: number;
-  onBrushSizeChange: (size: number) => void;
+declare module "fabric" {
+  interface Object {
+    label?: string;
+  }
 }
 
-export const StrokeControls = ({ brushSize, onBrushSizeChange }: StrokeControlsProps) => {
+interface StrokeControlsProps {
+  selectedObject: FabricObject | null;
+  selectedTool: string;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
+}
+
+export const StrokeControls = ({ selectedObject, selectedTool, brushSize, setBrushSize }: StrokeControlsProps) => {
+  const strokeControlObjs = ['rectangle', 'triangle', 'circle', 'pen'];
   return (
+    <div>
+    {(strokeControlObjs.includes(selectedTool) || strokeControlObjs.includes(selectedObject?.label)) && (
     <div className="bg-background border border-border rounded-lg shadow-lg p-3 min-w-[200px]">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -15,7 +27,7 @@ export const StrokeControls = ({ brushSize, onBrushSizeChange }: StrokeControlsP
         </div>
         <Slider
           value={[brushSize]}
-          onValueChange={(value) => onBrushSizeChange(value[0])}
+          onValueChange={(value) => setBrushSize(value[0])}
           max={20}
           min={1}
           step={1}
@@ -31,6 +43,8 @@ export const StrokeControls = ({ brushSize, onBrushSizeChange }: StrokeControlsP
           />
         </div>
       </div>
+    </div>
+    )}
     </div>
   );
 };
